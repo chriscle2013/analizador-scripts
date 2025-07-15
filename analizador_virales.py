@@ -10,7 +10,10 @@ from sklearn.cluster import KMeans
 import tweepy
 from textblob import TextBlob
 import config  # Archivo con credenciales (crear archivo config.py con tus API keys)
-
+import sys
+if sys.version_info >= (3, 13):
+    import warnings
+    warnings.warn("Python 3.13 puede tener problemas de compatibilidad. Recomendamos usar 3.10-3.11")
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
