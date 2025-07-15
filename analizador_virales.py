@@ -89,7 +89,7 @@ class HookOptimizer:
     
     try:
         X = self.vectorizer.fit_transform(hooks_virales)
-        n_clusters = min(5, len(hooks_virales)-1)
+        n_clusters = min(5, len(hooks_virales)-1)  # Asegura n_clusters < n_samples
         self.model = KMeans(n_clusters=n_clusters)
         self.model.fit(X)
         self.hooks_db = hooks_virales
