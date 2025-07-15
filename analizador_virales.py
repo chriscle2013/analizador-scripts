@@ -83,10 +83,19 @@ class HookOptimizer:
         self.hooks_db = []
         
     def entrenar(self, hooks_virales):
-        """Entrena con hooks exitosos históricos"""
+    """Entrena con hooks exitosos históricos"""
+    if not hooks_virales or len(hooks_virales) < 2:
+        raise ValueError("Se necesitan al menos 2 hooks para entrenar")
+    
+    try:
         X = self.vectorizer.fit_transform(hooks_virales)
+        n_clusters = min(5, len(hooks_virales)-1)  # Asegura que n_clusters < n_samples
+        self.model = KMeans(n_clusters=n_clusters)
         self.model.fit(X)
         self.hooks_db = hooks_virales
+    except Exception as e:
+        st.error(f"Error entrenando modelo: {str(e)}")
+        self.model = None
         
     def generar_hook_optimizado(self, texto, tema):
         """Genera hook basado en patrones aprendidos"""
@@ -143,10 +152,12 @@ def main():
     # Inicializar sistemas
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
-        "Cómo ahorré $1000 en 1 mes con este método",
-        "El error que arruina tu postura al correr",
-        "iPhone 15 vs Samsung S23: ¿Cuál gana?"
-    ])
+    "Cómo ahorré $1000 en 1 mes con este método",
+    "El error que el 90% comete al hacer ejercicio",
+    "Comparativa: iPhone 15 vs Samsung S23 - ¿Cuál gana?",
+    "Esta técnica aumentó mis ventas un 300%",
+    "Lo que nadie te dice sobre invertir en cripto"
+])
     
     col1, col2 = st.columns([1, 2])
     
