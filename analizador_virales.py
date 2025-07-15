@@ -1,172 +1,179 @@
 import streamlit as st
 import re
 import random
+import numpy as np
 from datetime import datetime
 from collections import defaultdict
 import pytz
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+import tweepy
+from textblob import TextBlob
+import config  # Archivo con credenciales (crear archivo config.py con tus API keys)
 
-# 1. BASE DE DATOS MULTIDIMENSIONAL (30+ TEMÁTICAS)
+# ======================
+# 1. BASE DE DATOS DE TEMÁTICAS
+# ======================
 TEMATICAS = {
-    # Tecnología
-    "Inteligencia Artificial": {
-        "palabras_clave": ["IA", "machine learning", "red neuronal", "chatbot", "GPT"],
+    # Deportes
+    "Fórmula 1": {
+        "palabras_clave": ["f1", "gran premio", "piloto", "carrera", "escudería"],
         "hooks": {
-            "pregunta": ["¿Sabías que {IA} puede {acción}? Esto cambiará {industria}", 
-                        "¿Estamos preparados para {impacto_IA}?"],
-            "impacto": ["{avance_IA} que dejó obsoletos a los {profesión}"],
-            "controversia": ["Lo que {empresa_tec} no quiere que sepas sobre {tema_tec}"]
+            "técnica": ["El {sistema} que hizo a {equipo} ganar en {circuito}"],
+            "polémica": ["La decisión de la FIA que cambió el {evento}"],
+            "récord": ["{piloto} rompió el récord de {marca} en {año}"]
         },
-        "ctas": ["¿La IA debería regularse? Debate ↓ #IAEthics", 
-                "¿Reemplazará tu trabajo? Comenta 👇"],
-        "hashtags": ["#IA", "#FuturoTecnológico"]
+        "hashtags": ["#F1", "#Formula1"]
     },
     
-    # Deportes
     "Fútbol": {
-        "palabras_clave": ["gol", "partido", "jugador", "liga", "tarjeta", "árbitro"],
+        "palabras_clave": ["gol", "partido", "jugador", "liga", "champions"],
         "hooks": {
             "táctica": ["El {sistema_juego} que hizo campeón a {equipo}"],
             "polémica": ["El {incidente} más injusto de la historia"],
-            "récord": ["{jugador} rompió este récord de {estadística}"]
+            "dato": ["{jugador} tiene este récord de {estadística}"]
         },
-        "ctas": ["¿Quién es el mejor? Vota →", "¿Penal o no? Juzga tú ↓"],
-        "hashtags": ["#Fútbol", "#LaPulga"]
+        "hashtags": ["#Fútbol", "#Champions"]
     },
 
-    # Salud
-    "Fitness": {
-        "palabras_clave": ["ejercicio", "gimnasio", "proteína", "rutina"],
+    # Mindset
+    "Mindset": {
+        "palabras_clave": ["éxito", "hábitos", "mentalidad", "crecimiento"],
         "hooks": {
-            "resultados": ["{rutina} para {objetivo} en {tiempo}"],
-            "mitos": ["El error que arruina tu {ejercicio}"],
-            "ciencia": ["Estudio prueba que {hábito} quema {porcentaje}% más grasa"]
+            "científico": ["Estudio de Harvard prueba que {hábito} aumenta {métrica}"],
+            "inspiración": ["Cómo {persona} pasó de {situación} a {logro}"],
+            "acción": ["Si haces esto cada mañana, tu vida cambiará en {tiempo}"]
         },
-        "ctas": ["¿Probaste esto? Cuéntanos ↓", "Guarda para después 💾"],
-        "hashtags": ["#Fitness", "#GymLife"]
+        "hashtags": ["#Mindset", "#Crecimiento"]
+    },
+
+    # Finanzas
+    "Finanzas": {
+        "palabras_clave": ["dinero", "inversión", "ahorro", "finanzas"],
+        "hooks": {
+            "impacto": ["Cómo ahorré {cantidad} en {tiempo} con {método}"],
+            "error": ["El error que te hace perder {porcentaje}% de tus ingresos"],
+            "sistema": ["El método {nombre} para multiplicar tu dinero"]
+        },
+        "hashtags": ["#Finanzas", "#Ahorro"]
+    },
+
+    # Tecnología
+    "Tecnología": {
+        "palabras_clave": ["robot", "ia", "tecnología", "automatización"],
+        "hooks": {
+            "futuro": ["Cómo {tecnología} cambiará {industria} en {año}"],
+            "comparación": ["{ProductoA} vs {ProductoB}: ¿Cuál gana?"],
+            "review": ["Probé {producto} y esto pasó"]
+        },
+        "hashtags": ["#Tecnología", "#Innovación"]
     }
 }
 
-# 2. GENERADOR DE EJEMPLOS CONTEXTUALES
-EJEMPLOS = {
-    "IA": ["GPT-4", "DeepMind"],
-    "acción": ["escribir código", "diagnosticar cáncer", "componer música"],
-    "industria": ["la medicina", "el arte", "tu trabajo"],
-    "equipo": ["el Barcelona", "Argentina", "el Real Madrid"],
-    "sistema_juego": ["tiki-taka", "contraataque", "presión alta"],
-    "rutina": ["este entrenamiento", "esta secuencia", "esta combinación"],
-    "objetivo": ["ganar músculo", "quemar grasa", "definir"]
-}
+# ======================
+# 2. SISTEMA DE APRENDIZAJE AUTOMÁTICO
+# ======================
+class HookOptimizer:
+    def __init__(self):
+        self.vectorizer = TfidfVectorizer(max_features=1000)
+        self.model = KMeans(n_clusters=5)
+        self.hooks_db = []
+        
+    def entrenar(self, hooks_virales):
+        """Entrena con hooks exitosos históricos"""
+        X = self.vectorizer.fit_transform(hooks_virales)
+        self.model.fit(X)
+        self.hooks_db = hooks_virales
+        
+    def generar_hook_optimizado(self, texto, tema):
+        """Genera hook basado en patrones aprendidos"""
+        try:
+            X_new = self.vectorizer.transform([texto])
+            cluster = self.model.predict(X_new)[0]
+            hooks_similares = [h for i,h in enumerate(self.hooks_db) 
+                             if self.model.labels_[i] == cluster]
+            
+            return random.choice(hooks_similares) if hooks_similares else self.generar_hook_default(tema)
+        except:
+            return self.generar_hook_default(tema)
+    
+    def generar_hook_default(self, tema):
+        """Hook base cuando no hay datos suficientes"""
+        hooks = TEMATICAS.get(tema, {}).get("hooks", {}).values()
+        return random.choice(list(hooks)[0]) if hooks else "Descubre esto..."
 
-# 3. DETECTOR DE TENDENCIAS ESTACIONALES
-def detectar_tendencias():
-    mx_tz = pytz.timezone('America/Mexico_City')
-    hoy = datetime.now(mx_tz)
-    tendencias = []
-    
-    # Eventos globales
-    if hoy.month == 12: tendencias.append(("Navidad", ["regalo", "celebración", "familia"]))
-    if hoy.month == 6 and hoy.day >= 15: tendencias.append(("Mundial", ["gol", "selección", "partido"]))
-    
-    # Tecnología (Ej: lanzamientos conocidos)
-    if hoy.month == 9: tendencias.append(("Apple Event", ["iPhone", "iOS", "keynote"]))
-    
-    return tendencias
+# ======================
+# 3. FUNCIONES PRINCIPALES
+# ======================
+def analizar_tematica(texto):
+    """Detecta la temática principal del texto"""
+    scores = defaultdict(int)
+    for tema, data in TEMATICAS.items():
+        for palabra in data["palabras_clave"]:
+            if re.search(rf"\b{palabra}\b", texto.lower()):
+                scores[tema] += 1
+    return max(scores.items(), key=lambda x: x[1]) if scores else ("General", 1)
 
-# 4. GENERADOR DE HOOKS INTELIGENTE
-def generar_hook(tema, texto):
-    # Combinar palabras clave de tema + tendencias
-    palabras_clave = TEMATICAS[tema]["palabras_clave"].copy()
-    for tendencia, palabras in detectar_tendencias():
-        palabras_clave.extend(palabras)
-    
-    # Seleccionar estrategia basada en sentimiento
-    blob = TextBlob(texto)
-    polaridad = blob.sentiment.polarity
-    
-    if polaridad > 0.3:
-        estrategia = random.choice(["pregunta", "impacto"])
-    elif polaridad < -0.1:
-        estrategia = "controversia"
-    else:
-        estrategia = random.choice(list(TEMATICAS[tema]["hooks"].keys()))
-    
-    # Generar hook con plantillas dinámicas
-    plantilla = random.choice(TEMATICAS[tema]["hooks"][estrategia])
-    hook = plantilla
-    
-    # Rellenar placeholders
-    for placeholder in re.findall(r"\{(.*?)\}", plantilla):
-        if placeholder in EJEMPLOS:
-            hook = hook.replace("{"+placeholder+"}", random.choice(EJEMPLOS[placeholder]))
-    
-    # Añadir emojis según temática
-    emojis = {
-        "IA": "🤖", "Fútbol": "⚽", "Fitness": "💪"
-    }.get(tema, "✨")
-    
-    return f"{emojis} {hook}"
-
-# 5. SISTEMA MULTIFORMATO
-def adaptar_formato(contenido, formato):
+def adaptar_formato(contenido, formato, tema):
+    """Ajusta el contenido al formato de red social"""
     formatos = {
-        "Reels": {
-            "estructura": "Hook (0-3s) → Desarrollo (15s) → CTA (2s)",
-            "hashtags": 5,
-            "máx_caracteres": 150
-        },
-        "TikTok": {
-            "estructura": "Impacto inmediato + Baile/Reto opcional",
-            "hashtags": 3,
-            "máx_caracteres": 100
-        },
-        "YouTube": {
-            "estructura": "Preview + Intro + Contenido + CTA extendido",
-            "hashtags": 8,
-            "máx_caracteres": 5000
-        }
+        "Reels": {"hashtags": 5, "máx_caracteres": 150},
+        "TikTok": {"hashtags": 3, "máx_caracteres": 100},
+        "YouTube": {"hashtags": 8, "máx_caracteres": 5000}
     }
+    cfg = formatos.get(formato, formatos["Reels"])
     
-    cfg = formatos[formato]
-    contenido = contenido[:cfg["máx_caracteres"]]
-    hashtags = ' '.join(random.sample(TEMATICAS[tema]["hashtags"], min(cfg["hashtags"], len(TEMATICAS[tema]["hashtags"]))))
+    # Línea corregida (paréntesis balanceados)
+    hashtags = ' '.join(random.sample(
+        TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"]),
+        min(cfg["hashtags"], len(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"])))
+    ))
     
-    return f"{contenido}\n\n{hashtags}"
+    return f"{contenido[:cfg['máx_caracteres']]}\n\n{hashtags}"
 
-# 6. INTERFAZ STREAMLIT (MEJORADA)
+# ======================
+# 4. INTERFAZ STREAMLIT
+# ======================
 def main():
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
+    
+    # Inicializar sistemas
+    hook_ai = HookOptimizer()
+    hook_ai.entrenar([
+        "Cómo ahorré $1000 en 1 mes con este método",
+        "El error que arruina tu postura al correr",
+        "iPhone 15 vs Samsung S23: ¿Cuál gana?"
+    ])
     
     col1, col2 = st.columns([1, 2])
     
     with col1:
         st.header("Configuración")
-        texto = st.text_area("Pega tu contenido:", height=200)
+        texto = st.text_area("Pega tu contenido:", height=150)
         formato = st.selectbox("Formato:", ["Reels", "TikTok", "YouTube"])
-        tema_manual = st.selectbox("O elige temática:", list(TEMATICAS.keys()))
         
     with col2:
         if st.button("🚀 Generar Contenido Viral"):
             if texto:
-                # Análisis automático
-                tema, _ = analizar_tematica(texto)
-                tema = tema if tema != "General" else tema_manual
+                # Análisis
+                tema, score = analizar_tematica(texto)
+                polaridad = TextBlob(texto).sentiment.polarity
                 
-                # Generación de contenido
-                hook = generar_hook(tema, texto)
-                cta = random.choice(TEMATICAS[tema]["ctas"])
-                contenido = adaptar_formato(f"{hook}\n\n{texto}\n\n{cta}", formato)
+                # Generación
+                hook = hook_ai.generar_hook_optimizado(texto, tema)
+                contenido = adaptar_formato(f"{hook}\n\n{texto}", formato, tema)
                 
-                # Mostrar resultados
-                st.subheader(f"🎯 Temática: {tema}")
-                st.text_area("Contenido optimizado:", contenido, height=300)
+                # Resultados
+                st.subheader(f"🎯 Temática: {tema} (Confianza: {score*10}%)")
+                st.text_area("Contenido Optimizado:", contenido, height=300)
                 
-                # Insights
-                with st.expander("🔍 Análisis Avanzado"):
-                    st.write(f"**Estrategia:** {estrategia.capitalize()}")
-                    st.write(f"**Tendencias aplicadas:** {', '.join(t[0] for t in detectar_tendencias())}")
-                    st.progress(min(int((polaridad+1)*50), 100), text="Potencial Viral")
+                # Métricas
+                with st.expander("📊 Análisis Avanzado"):
+                    st.metric("Sentimiento", "Positivo" if polaridad > 0 else "Negativo", 
+                             delta=f"{polaridad:.2f}")
+                    st.write(f"**Hashtags:** {contenido.splitlines()[-1]}")
             else:
-                st.warning("Por favor ingresa contenido")
+                st.warning("Por favor ingresa contenido para analizar")
 
 if __name__ == "__main__":
     main()
