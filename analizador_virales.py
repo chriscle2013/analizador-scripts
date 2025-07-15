@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 import tweepy
 from textblob import TextBlob
+import config  # Archivo con credenciales (crear archivo config.py con tus API keys)
 import sys
 if sys.version_info >= (3, 13):
     import warnings
