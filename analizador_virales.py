@@ -128,7 +128,7 @@ def adaptar_formato(contenido, formato):
     
     cfg = formatos[formato]
     contenido = contenido[:cfg["máx_caracteres"]]
-    hashtags = ' '.join(random.sample(TEMATICAS[tema]["hashtags"], min(cfg["hashtags"], len(TEMATICAS[tema]["hashtags"])))
+    hashtags = ' '.join(random.sample(TEMATICAS[tema]["hashtags"], min(cfg["hashtags"], len(TEMATICAS[tema]["hashtags"]))))
     
     return f"{contenido}\n\n{hashtags}"
 
