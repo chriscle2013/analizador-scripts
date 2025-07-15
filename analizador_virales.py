@@ -83,18 +83,18 @@ class HookOptimizer:
         self.hooks_db = []
         
     def entrenar(self, hooks_virales):
-    """Entrena con hooks exitosos históricos"""
-    if not hooks_virales:
-        raise ValueError("La lista de hooks no puede estar vacía")
-    try:
-        X = self.vectorizer.fit_transform(hooks_virales)
-        n_clusters = min(3, len(hooks_virales)-1)
-        self.model = KMeans(n_clusters=n_clusters)
-        self.model.fit(X)
-        self.hooks_db = hooks_virales
-    except Exception as e:
-        st.error(f"Error entrenando: {e}")
-        self.model = None
+        """Entrena con hooks exitosos históricos"""
+        if not hooks_virales:
+            raise ValueError("La lista de hooks no puede estar vacía")
+        try:
+            X = self.vectorizer.fit_transform(hooks_virales)
+            n_clusters = min(3, len(hooks_virales)-1)
+            self.model = KMeans(n_clusters=n_clusters)
+            self.model.fit(X)
+            self.hooks_db = hooks_virales
+        except Exception as e:
+            st.error(f"Error entrenando: {e}")
+            self.model = None
         
     def generar_hook_optimizado(self, texto, tema):
         """Genera hook basado en patrones aprendidos"""
