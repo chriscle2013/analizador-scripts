@@ -1,8 +1,7 @@
-streamlit
-textblob
-nltk
-scikit
-numpy
-pytz
-python-dotenv
-pip==24.0
+streamlit==1.32.0
+textblob==0.15.3
+nltk==3.8.1
+scikit-learn==1.4.0
+numpy==1.26.0
+pytz==2023.3
+python-dotenv==1.0.0
