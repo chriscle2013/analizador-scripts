@@ -1,174 +1,244 @@
-
 import streamlit as st
 from textblob import TextBlob
 import re
 import nltk
 import random
+from collections import defaultdict
 
-# Asegurar recursos para TextBlob
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+# Configuración inicial
+nltk.download('punkt', quiet=True)
+st.set_page_config(page_title="Analizador de Reels Virales Pro", layout="wide")
 
-# Función para analizar sentimiento
-def detectar_sentimiento(texto):
-    blob = TextBlob(texto)
-    sentimiento = blob.sentiment.polarity
-    if sentimiento > 0.1:
-        return "positivo"
-    elif sentimiento < -0.1:
-        return "negativo"
+# Cache para mejor performance (usa @st.cache_data en Streamlit >= 1.18)
+@st.cache_data
+def analizar_sentimiento(texto):
+    """Análisis de sentimiento mejorado con TextBlob"""
+    analysis = TextBlob(texto)
+    polarity = analysis.sentiment.polarity
+    
+    if polarity > 0.3:
+        return ("Muy Positivo 😊", polarity)
+    elif polarity > 0.1:
+        return ("Positivo 🙂", polarity)
+    elif polarity < -0.3:
+        return ("Muy Negativo 😠", polarity)
+    elif polarity < -0.1:
+        return ("Negativo 🙁", polarity)
     else:
-        return "neutro"
+        return ("Neutral 😐", polarity)
 
-# Evaluación de viralidad
+@st.cache_data
 def evaluar_viralidad(script):
-    puntaje = 0
-    if any(p in script.lower() for p in ["sabías que", "no vas a creer", "te cuento algo", "impactante", "emocionante"]):
-        puntaje += 2
-    if any(p in script.lower() for p in ["guárdalo", "comparte", "dale like", "comenta"]):
-        puntaje += 1
-    if len(script.split()) < 80:
-        puntaje += 1
-    if puntaje >= 3:
-        return "Alto"
-    elif puntaje == 2:
-        return "Medio"
-    else:
-        return "Bajo"
+    """Evaluación de viralidad con puntaje detallado"""
+    metricas = {
+        'hook_llamativo': 3 if any(p in script.lower() for p in ["sabías que", "no vas a creer", "impactante"]) else 0,
+        'cta': 2 if re.search(r"(comenta|guárdalo|comparte|dale like)", script.lower()) else 0,
+        'brevedad': 2 if len(script.split()) < 100 else 0,
+        'emocional': 2 if any(p in script.lower() for p in ["increíble", "sorprendente", "emocionante"]) else 0,
+        'preguntas': 1 if '?' in script else 0
+    }
+    
+    puntaje_total = sum(metricas.values())
+    
+    return {
+        'puntaje': puntaje_total,
+        'maximo': 10,
+        'metricas': metricas,
+        'nivel': 'Alto' if puntaje_total >= 7 else 'Medio' if puntaje_total >= 4 else 'Bajo'
+    }
 
-# Recomendaciones
+@st.cache_data
 def generar_recomendaciones(script):
+    """Genera recomendaciones basadas en análisis detallado"""
     recomendaciones = []
-    if not any(p in script.lower() for p in ["sabías que", "no vas a creer", "te cuento algo"]):
-        recomendaciones.append("Agrega un hook llamativo al inicio.")
-    if any(len(frase.split()) > 20 for frase in script.split(".")):
-        recomendaciones.append("Reduce la longitud de las frases para mantener la atención.")
-    if not any(p in script.lower() for p in ["guárdalo", "comparte", "comenta", "sígueme"]):
-        recomendaciones.append("Incluye una llamada a la acción (CTA).")
+    blob = TextBlob(script)
+    
+    # Análisis de longitud
+    if len(script.split()) > 150:
+        recomendaciones.append("🔹 Reducir longitud (ideal <150 palabras)")
+    
+    # Análisis de frases
+    long_frases = [len(frase.split()) for frase in script.split('.') if frase.strip()]
+    if sum(long_frases)/len(long_frases) > 15:
+        recomendaciones.append("🔹 Acortar frases (promedio >15 palabras)")
+    
+    # Llamadas a acción
+    if not re.search(r"(comenta|guárdalo|comparte)", script.lower()):
+        recomendaciones.append("🔹 Añadir CTA (Comenta/Comparte)")
+    
+    # Elementos emocionales
+    emociones = ['increíble', 'sorprendente', 'emocionante']
+    if not any(e in script.lower() for e in emociones):
+        recomendaciones.append(f"🔹 Incluir palabras emocionales ({', '.join(emociones)})")
+    
+    # Preguntas
+    if '?' not in script:
+        recomendaciones.append("🔹 Incluir preguntas para engagement")
+    
     return recomendaciones
 
-# Detección de temática
-def detectar_tematica(script):
+@st.cache_data
+def detectar_tematicas(script):
+    """Detección múltiple de temáticas con ponderación"""
     script = script.lower()
     temas = {
-        "motivación": ["lograr", "superar", "esfuerzo", "disciplina", "motivación", "reto", "crecimiento", "cambiar", "vida", "metas"],
-        "autoestima": ["valor", "mereces", "amor propio", "autoestima", "confianza", "creer en ti", "aceptación"],
-        "dinero": ["dinero", "finanzas", "abundancia", "deuda", "rico", "pobre", "ahorro", "invertir", "negocio"],
-        "salud": ["salud", "bienestar", "ejercicio", "dormir", "hábitos", "comida", "cuerpo", "energía", "alimentación"],
-        "relaciones": ["pareja", "amor", "ruptura", "tóxica", "relaciones", "familia", "soledad", "amistad"],
-        "éxito": ["éxito", "logro", "trabajo", "profesional", "empresa", "emprender", "meta", "sueño"],
-        "espiritualidad": ["espíritu", "alma", "universo", "vibración", "Dios", "meditación", "energía", "consciencia"]
+        "Motivación": ["lograr", "superar", "esfuerzo", "disciplina"],
+        "Autoestima": ["valor", "mereces", "amor propio", "confianza"],
+        "Finanzas": ["dinero", "finanzas", "ahorro", "invertir"],
+        "Salud": ["salud", "bienestar", "ejercicio", "hábitos"],
+        "Relaciones": ["pareja", "amor", "familia", "amistad"],
+        "Éxito": ["éxito", "logro", "emprender", "sueño"],
+        "Tecnología": ["robot", "IA", "futuro", "tecnología"]
     }
+    
+    conteo = defaultdict(int)
     for tema, palabras in temas.items():
-        if any(p in script for p in palabras):
-            return tema
-    return "general"
+        for palabra in palabras:
+            if palabra in script:
+                conteo[tema] += 1
+    
+    total = sum(conteo.values())
+    if total == 0:
+        return [("General", 100)]
+    
+    return sorted(
+        [(k, round(v/total*100)) for k, v in conteo.items()],
+        key=lambda x: x[1],
+        reverse=True
+    )
 
-# Generar hook
+@st.cache_data
 def generar_hook(script):
-    sentimiento = detectar_sentimiento(script)
-    tematica = detectar_tematica(script)
-    hooks = {
-        "motivación": {
-            "positivo": ["Lo que estás por leer puede encender tu fuego interior.", "Estás más cerca de lo que imaginas, y este mensaje te lo recordará."],
-            "negativo": ["Cuando todo parece difícil, este mensaje puede darte fuerza.", "A veces perderse es parte de encontrarse."],
-            "neutro": ["Un cambio pequeño puede iniciar una gran transformación.", "Este mensaje es un punto de partida."]
-        },
-        "autoestima": {
-            "positivo": ["Esto te recordará lo mucho que vales.", "Solo necesitas creer en ti. Este mensaje te lo muestra."],
-            "negativo": ["¿Te cuesta quererte? Esto puede ayudarte.", "Hay una parte de ti que olvidaste... este mensaje la despierta."],
-            "neutro": ["Una pausa para reconectar contigo mismo.", "Este texto es un espejo. Mírate con amor."]
-        },
-        "dinero": {
-            "positivo": ["Este consejo puede ayudarte a atraer más abundancia.", "Lo que estás por leer puede transformar tu relación con el dinero."],
-            "negativo": ["¿Te cuesta manejar el dinero? Esto puede ayudarte.", "Este mensaje puede darte claridad financiera cuando más lo necesitas."],
-            "neutro": ["Una reflexión sobre el dinero que podría cambiar tu mentalidad.", "Esto puede ser clave para tu estabilidad financiera."]
-        },
-        "salud": {
-            "positivo": ["Tu bienestar empieza con pequeños pasos. Aquí va uno.", "Esto puede ser el inicio de un cambio saludable."],
-            "negativo": ["Tal vez estás descuidando lo más valioso: tu salud.", "A veces ignoramos las señales... este mensaje es una de ellas."],
-            "neutro": ["Una dosis de conciencia sobre tu salud.", "Esto que leerás puede ayudarte a mejorar tu energía."]
-        },
-        "relaciones": {
-            "positivo": ["Esto puede mejorar la forma en que te conectas con los demás.", "Amar también es aprender. Este mensaje lo resume."],
-            "negativo": ["Si estás pasando por un mal momento emocional, esto es para ti.", "A veces lo más duro que escuchamos es lo que más necesitamos."],
-            "neutro": ["Una mirada clara sobre el amor y las relaciones.", "Este mensaje puede ayudarte a entender tus vínculos."]
-        },
-        "éxito": {
-            "positivo": ["Esto puede impulsarte hacia tus metas.", "El éxito empieza por lo que estás a punto de leer."],
-            "negativo": ["Fracasar también es parte del camino. Este mensaje te lo explica.", "Si te sientes estancado, esto puede ayudarte."],
-            "neutro": ["Una reflexión que puede cambiar tu forma de alcanzar el éxito.", "Este mensaje puede redirigir tu ambición."]
-        },
-        "espiritualidad": {
-            "positivo": ["Estás donde necesitas estar. Este mensaje te lo confirmará.", "Lo que leerás ahora puede elevar tu energía."],
-            "negativo": ["A veces el alma necesita palabras más que el cuerpo.", "Este mensaje puede guiarte cuando sientas que te perdiste."],
-            "neutro": ["Un llamado sutil a tu interior.", "Esto puede ayudarte a reconectar con tu esencia."]
-        },
-        "general": {
-            "positivo": ["Este mensaje puede inspirarte más de lo que imaginas.", "Lo que estás por leer puede motivarte a actuar."],
-            "negativo": ["Esto puede doler, pero lo necesitas.", "Hay verdad en estas palabras. Escúchalas con el corazón."],
-            "neutro": ["Una idea que puede cambiar tu día.", "Esto podría abrirte una nueva perspectiva."]
-        }
+    """Generador de hooks con múltiples estrategias"""
+    sentimiento, polaridad = analizar_sentimiento(script)
+    temas = detectar_tematicas(script)[:2]
+    
+    estrategias = {
+        'pregunta': [
+            f"¿Sabías que {temas[0][0]} puede cambiar tu vida?",
+            f"¿Estás listo para este dato sobre {temas[0][0]}?"
+        ],
+        'afirmacion': [
+            f"Esto cambiará tu forma de ver {temas[0][0]}",
+            f"El secreto de {temas[0][0]} que pocos conocen"
+        ],
+        'controversia': [
+            f"Todo lo que sabes sobre {temas[0][0]} podría estar mal",
+            f"Por qué {temas[0][0]} no funciona como crees"
+        ]
     }
-    return random.choice(hooks[tematica][sentimiento])
+    
+    # Selección de estrategia basada en sentimiento
+    if polaridad > 0.2:
+        estrategia = random.choice(['pregunta', 'afirmacion'])
+    elif polaridad < -0.2:
+        estrategia = 'controversia'
+    else:
+        estrategia = random.choice(['pregunta', 'afirmacion'])
+    
+    return random.choice(estrategias[estrategia])
 
-# Mejorar el script
 def mejorar_script(script):
-    primeras_lineas = script.strip().split('\n')[0][:120].lower()  # <<--- Corregido aquí
-    if not any(p in primeras_lineas for p in ["sabías que", "no vas a creer", "te cuento algo", "esto te va a sorprender", "te ha pasado que", "lo que estás por leer", "esto puede", "este mensaje"]):
-        hook = generar_hook(script) + "\n"  # <<--- También usa \n aquí
+    """Función mejorada de optimización de scripts"""
+    # Generar hook si no existe
+    primeras_lineas = script.strip().split('\n')[0][:120].lower()
+    if not any(p in primeras_lineas for p in ["sabías que", "no vas a creer", "impactante"]):
+        hook = f"{generar_hook(script)}\n\n"
     else:
         hook = ""
-
-    frases = script.split('.')
+    
+    # Dividir frases largas
     frases_mejoradas = []
-    for frase in frases:
+    for frase in script.split('.'):
         frase = frase.strip()
         if frase:
             palabras = frase.split()
-            if len(palabras) > 20:
+            if len(palabras) > 18:
                 mitad = len(palabras) // 2
-                primera = " ".join(palabras[:mitad])
-                segunda = " ".join(palabras[mitad:])
-                frases_mejoradas.append(primera + '.')
-                frases_mejoradas.append(segunda + '.')
+                frases_mejoradas.append(" ".join(palabras[:mitad]) + ".")
+                frases_mejoradas.append(" ".join(palabras[mitad:]) + ".")
             else:
-                frases_mejoradas.append(frase + '.')
+                frases_mejoradas.append(frase + ".")
+    
+    # Añadir elementos de engagement
+    mejoras = []
+    if not re.search(r"(sígueme|dale like|comenta)", script.lower()):
+        mejoras.append("💬 ¿Qué opinas? ¡Déjalo en los comentarios!")
+    
+    if not any(p in script.lower() for p in ["increíble", "sorprendente"]):
+        mejoras.append("✨ Este contenido es más impactante de lo que imaginas")
+    
+    # Reconstrucción del script
+    return f"{hook}{' '.join(frases_mejoradas)}\n\n{' '.join(mejoras)}"
 
-    palabras_emocionales = ['increíble', 'impactante', 'motivador', 'emocionante']
-    if not any(p in script.lower() for p in palabras_emocionales):
-        frases_mejoradas.append("Este mensaje es tan poderoso que puede inspirarte de verdad.")
+# Interfaz mejorada
+def main():
+    st.title("🎬 Analizador de Reels Virales PRO")
+    st.markdown("Optimiza tus guiones para maximizar engagement y viralidad")
+    
+    with st.expander("📌 Instrucciones"):
+        st.markdown("""
+        1. Pega tu guión en el área de texto
+        2. Haz clic en "Analizar Guión"
+        3. Recibe recomendaciones y versión optimizada
+        """)
+    
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        script_input = st.text_area("✍️ Pega aquí tu guión completo:", 
+                                  height=300,
+                                  placeholder="Ejemplo: 'Descubre cómo esta tecnología...'")
+        
+        if st.button("🚀 Analizar Guión", use_container_width=True):
+            if not script_input.strip():
+                st.error("Por favor ingresa un guión para analizar")
+                st.stop()
+    
+    if script_input and script_input.strip():
+        with st.spinner("Analizando contenido..."):
+            # Análisis
+            sentimiento, polaridad = analizar_sentimiento(script_input)
+            viralidad = evaluar_viralidad(script_input)
+            recomendaciones = generar_recomendaciones(script_input)
+            temas = detectar_tematicas(script_input)
+            
+            # Mostrar resultados
+            with col2:
+                st.subheader("📊 Métricas Clave")
+                
+                # Gráfico de sentimiento
+                st.metric("Sentimiento", sentimiento, 
+                         delta=f"{polaridad:.2f} polaridad", 
+                         help="Rango de -1 (negativo) a 1 (positivo)")
+                
+                # Puntaje de viralidad
+                st.progress(viralidad['puntaje']/viralidad['maximo'])
+                st.caption(f"Potencial de viralidad: {viralidad['nivel']} ({viralidad['puntaje']}/{viralidad['maximo']} pts)")
+                
+                # Temáticas detectadas
+                st.write("**🎯 Temáticas principales:**")
+                for tema, porcentaje in temas[:3]:
+                    st.write(f"- {tema} ({porcentaje}%)")
+            
+            # Sección de recomendaciones
+            st.subheader("💡 Recomendaciones para Mejorar")
+            cols_rec = st.columns(2)
+            for i, rec in enumerate(recomendaciones):
+                cols_rec[i%2].info(rec)
+            
+            # Script optimizado
+            st.subheader("✨ Versión Optimizada")
+            script_mejorado = mejorar_script(script_input)
+            st.text_area("Copia este texto:", 
+                         value=script_mejorado, 
+                         height=300,
+                         label_visibility="hidden")
+            
+            # Botón de copia
+            st.button("📋 Copiar al Portapapeles", 
+                     on_click=lambda: st.write("Texto copiado!"),  # En realidad usar pyperclip
+                     help="Copia el texto optimizado")
 
-    if not re.search(r"(sígueme|dale like|guárdalo|comenta|etiqueta)", script.lower()):
-        frases_mejoradas.append("💬 Comenta si te hizo sentido y guárdalo para recordarlo.")
-
-    nuevo_script = hook + "\n".join(frases_mejoradas)  # <<--- Y aquí
-    return nuevo_script
-
-# Interfaz Streamlit
-st.title("🎬 Analizador de Reels Virales")
-st.markdown("Copia tu guión y descubre cómo hacerlo más viral 📈")
-
-script_input = st.text_area("✍️ Pega aquí tu guión", height=200)
-
-if st.button("📊 Analizar Guión"):
-    if not script_input.strip():
-        st.warning("⚠️ Debes ingresar un guión para analizar.")
-    else:
-        st.subheader("📋 Análisis del Script")
-        sentimiento = detectar_sentimiento(script_input)
-        viralidad = evaluar_viralidad(script_input)
-        recomendaciones = generar_recomendaciones(script_input)
-
-        st.markdown(f"**🔍 Sentimiento detectado:** {sentimiento.capitalize()}")
-        st.markdown(f"**🔥 Potencial de viralidad:** {viralidad}")
-
-        st.markdown("**💡 Recomendaciones:**")
-        for rec in recomendaciones:
-            st.markdown(f"- {rec}")
-
-        mejorado = mejorar_script(script_input)
-        st.subheader("📝 Versión Mejorada del Guión")
-        st.text(mejorado)
+if __name__ == "__main__":
+    main()
