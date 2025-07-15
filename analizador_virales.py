@@ -116,11 +116,9 @@ def generar_hook(script):
 
 # Mejorar el script
 def mejorar_script(script):
-    primeras_lineas = script.strip().split('
-')[0][:120].lower()
+    primeras_lineas = script.strip().split('\n')[0][:120].lower()  # <<--- Corregido aquí
     if not any(p in primeras_lineas for p in ["sabías que", "no vas a creer", "te cuento algo", "esto te va a sorprender", "te ha pasado que", "lo que estás por leer", "esto puede", "este mensaje"]):
-        hook = generar_hook(script) + "
-"
+        hook = generar_hook(script) + "\n"  # <<--- También usa \n aquí
     else:
         hook = ""
 
@@ -146,8 +144,7 @@ def mejorar_script(script):
     if not re.search(r"(sígueme|dale like|guárdalo|comenta|etiqueta)", script.lower()):
         frases_mejoradas.append("💬 Comenta si te hizo sentido y guárdalo para recordarlo.")
 
-    nuevo_script = hook + "
-".join(frases_mejoradas)
+    nuevo_script = hook + "\n".join(frases_mejoradas)  # <<--- Y aquí
     return nuevo_script
 
 # Interfaz Streamlit
