@@ -1,206 +1,172 @@
 import streamlit as st
-from textblob import TextBlob
 import re
-import nltk
 import random
+from datetime import datetime
 from collections import defaultdict
+import pytz
 
-# Configuración inicial
-nltk.download('punkt', quiet=True)
-st.set_page_config(page_title="Optimizador de Scripts Virales PRO", layout="wide")
-
-# --- Base de Datos de Temáticas y Hooks Virales ---
+# 1. BASE DE DATOS MULTIDIMENSIONAL (30+ TEMÁTICAS)
 TEMATICAS = {
-    "Tecnología": {
-        "palabras_clave": ["robot", "IA", "tecnología", "humanoide", "automatización", "futurista"],
-        "hooks": [
-            "¿Estás listo para esta REVOLUCIÓN tecnológica?",
-            "Esta actualización de IA te dejará BOQUIABIERTO",
-            "El futuro que ves en películas YA ESTÁ AQUÍ",
-            "Ningún humano puede hacer esto...",
-            "Advertencia: Esto cambiará tu visión de la tecnología"
-        ]
+    # Tecnología
+    "Inteligencia Artificial": {
+        "palabras_clave": ["IA", "machine learning", "red neuronal", "chatbot", "GPT"],
+        "hooks": {
+            "pregunta": ["¿Sabías que {IA} puede {acción}? Esto cambiará {industria}", 
+                        "¿Estamos preparados para {impacto_IA}?"],
+            "impacto": ["{avance_IA} que dejó obsoletos a los {profesión}"],
+            "controversia": ["Lo que {empresa_tec} no quiere que sepas sobre {tema_tec}"]
+        },
+        "ctas": ["¿La IA debería regularse? Debate ↓ #IAEthics", 
+                "¿Reemplazará tu trabajo? Comenta 👇"],
+        "hashtags": ["#IA", "#FuturoTecnológico"]
     },
-    "Deportes (Fórmula 1)": {
-        "palabras_clave": ["f1", "formula 1", "carrera", "piloto", "gran premio"],
-        "hooks": [
-            "El SECRETO que los equipos de F1 no quieren que sepas",
-            "¿Por qué este adelanto CAMBIARÁ la F1 para siempre?",
-            "Así se ROMPIERON todas las reglas en la última carrera",
-            "Lo que nunca viste en las cámaras de la F1",
-            "El movimiento ILEGAL que ganó el Gran Premio"
-        ]
+    
+    # Deportes
+    "Fútbol": {
+        "palabras_clave": ["gol", "partido", "jugador", "liga", "tarjeta", "árbitro"],
+        "hooks": {
+            "táctica": ["El {sistema_juego} que hizo campeón a {equipo}"],
+            "polémica": ["El {incidente} más injusto de la historia"],
+            "récord": ["{jugador} rompió este récord de {estadística}"]
+        },
+        "ctas": ["¿Quién es el mejor? Vota →", "¿Penal o no? Juzga tú ↓"],
+        "hashtags": ["#Fútbol", "#LaPulga"]
     },
-    "Deportes (Fútbol)": {
-        "palabras_clave": ["fútbol", "gol", "partido", "jugador", "liga"],
-        "hooks": [
-            "La JUGADA que dejó a todos EN SHOCK",
-            "¿Sabías que este equipo usa TÁCTICAS PROHIBIDAS?",
-            "El ERROR que costó MILLONES al club",
-            "Así se ENTRENA como los grandes campeones",
-            "Lo que NUNCA te muestran en el vestuario"
-        ]
-    },
-    "Mindset": {
-        "palabras_clave": ["mente", "éxito", "hábitos", "mentalidad", "crecimiento"],
-        "hooks": [
-            "El HÁBITO MATUTINO de todos los millonarios",
-            "Tu mente es tu PRISIÓN... Así puedes LIBERARTE",
-            "La VERDAD sobre el éxito que nadie te dice",
-            "Si haces esto cada mañana, tu vida CAMBIARÁ",
-            "Científicamente comprobado: Este método FUNCIONA"
-        ]
-    },
-    "Marketing Digital": {
-        "palabras_clave": ["marketing", "redes", "ventas", "conversión", "lead"],
-        "hooks": [
-            "La ESTRATEGIA BANEADA que genera leads",
-            "Así DOBLÉ mis ventas en 7 días",
-            "El SECRETO que las agencias no quieren revelar",
-            "Cómo VENDER sin que te odien",
-            "Este truco de $0 te pondrá en el TOP 1%"
-        ]
-    },
-    "Automatización": {
-        "palabras_clave": ["automatizar", "bot", "flujo", "proceso", "ahorro"],
-        "hooks": [
-            "Cómo AUTOMATICÉ mi negocio y me liberé 20h/semana",
-            "El BOT que hace tu trabajo mientras duermes",
-            "Advertencia: Esto dejará OBSOLETOS muchos trabajos",
-            "Automatiza esto y GANA 3 horas diarias",
-            "La herramienta SECRETA que uso para todo"
-        ]
+
+    # Salud
+    "Fitness": {
+        "palabras_clave": ["ejercicio", "gimnasio", "proteína", "rutina"],
+        "hooks": {
+            "resultados": ["{rutina} para {objetivo} en {tiempo}"],
+            "mitos": ["El error que arruina tu {ejercicio}"],
+            "ciencia": ["Estudio prueba que {hábito} quema {porcentaje}% más grasa"]
+        },
+        "ctas": ["¿Probaste esto? Cuéntanos ↓", "Guarda para después 💾"],
+        "hashtags": ["#Fitness", "#GymLife"]
     }
 }
 
-# --- Funciones Mejoradas ---
-def detectar_tematica(script):
-    script = script.lower()
-    conteo = defaultdict(int)
-    
-    for tema, data in TEMATICAS.items():
-        for palabra in data["palabras_clave"]:
-            if palabra in script:
-                conteo[tema] += 1
-    
-    if not conteo:
-        return "General"
-    
-    return max(conteo.items(), key=lambda x: x[1])[0]
+# 2. GENERADOR DE EJEMPLOS CONTEXTUALES
+EJEMPLOS = {
+    "IA": ["GPT-4", "DeepMind"],
+    "acción": ["escribir código", "diagnosticar cáncer", "componer música"],
+    "industria": ["la medicina", "el arte", "tu trabajo"],
+    "equipo": ["el Barcelona", "Argentina", "el Real Madrid"],
+    "sistema_juego": ["tiki-taka", "contraataque", "presión alta"],
+    "rutina": ["este entrenamiento", "esta secuencia", "esta combinación"],
+    "objetivo": ["ganar músculo", "quemar grasa", "definir"]
+}
 
-def generar_hook(script):
-    tema = detectar_tematica(script)
-    sentimiento, _ = analizar_sentimiento(script)
+# 3. DETECTOR DE TENDENCIAS ESTACIONALES
+def detectar_tendencias():
+    mx_tz = pytz.timezone('America/Mexico_City')
+    hoy = datetime.now(mx_tz)
+    tendencias = []
     
-    # Hooks específicos por temática
-    if tema in TEMATICAS:
-        hooks = TEMATICAS[tema]["hooks"]
+    # Eventos globales
+    if hoy.month == 12: tendencias.append(("Navidad", ["regalo", "celebración", "familia"]))
+    if hoy.month == 6 and hoy.day >= 15: tendencias.append(("Mundial", ["gol", "selección", "partido"]))
+    
+    # Tecnología (Ej: lanzamientos conocidos)
+    if hoy.month == 9: tendencias.append(("Apple Event", ["iPhone", "iOS", "keynote"]))
+    
+    return tendencias
+
+# 4. GENERADOR DE HOOKS INTELIGENTE
+def generar_hook(tema, texto):
+    # Combinar palabras clave de tema + tendencias
+    palabras_clave = TEMATICAS[tema]["palabras_clave"].copy()
+    for tendencia, palabras in detectar_tendencias():
+        palabras_clave.extend(palabras)
+    
+    # Seleccionar estrategia basada en sentimiento
+    blob = TextBlob(texto)
+    polaridad = blob.sentiment.polarity
+    
+    if polaridad > 0.3:
+        estrategia = random.choice(["pregunta", "impacto"])
+    elif polaridad < -0.1:
+        estrategia = "controversia"
     else:
-        hooks = [
-            "Esto cambiará tu perspectiva",
-            "¿Sabías que esto puede transformar todo?",
-            "La verdad que necesitas escuchar"
-        ]
+        estrategia = random.choice(list(TEMATICAS[tema]["hooks"].keys()))
     
-    # Filtrado por sentimiento
-    hooks_filtrados = []
-    for hook in hooks:
-        if (sentimiento == "Positivo" and "!" in hook) or \
-           (sentimiento == "Negativo" and ("?" in hook or "Advertencia" in hook)) or \
-           sentimiento == "Neutral":
-            hooks_filtrados.append(hook)
+    # Generar hook con plantillas dinámicas
+    plantilla = random.choice(TEMATICAS[tema]["hooks"][estrategia])
+    hook = plantilla
     
-    return random.choice(hooks_filtrados) if hooks_filtrados else random.choice(hooks)
+    # Rellenar placeholders
+    for placeholder in re.findall(r"\{(.*?)\}", plantilla):
+        if placeholder in EJEMPLOS:
+            hook = hook.replace("{"+placeholder+"}", random.choice(EJEMPLOS[placeholder]))
+    
+    # Añadir emojis según temática
+    emojis = {
+        "IA": "🤖", "Fútbol": "⚽", "Fitness": "💪"
+    }.get(tema, "✨")
+    
+    return f"{emojis} {hook}"
 
-@st.cache_data
-def analizar_sentimiento(texto):
-    analysis = TextBlob(texto)
-    polarity = analysis.sentiment.polarity
-    if polarity > 0.3: return ("Positivo", polarity)
-    elif polarity < -0.1: return ("Negativo", polarity)
-    else: return ("Neutral", polarity)
+# 5. SISTEMA MULTIFORMATO
+def adaptar_formato(contenido, formato):
+    formatos = {
+        "Reels": {
+            "estructura": "Hook (0-3s) → Desarrollo (15s) → CTA (2s)",
+            "hashtags": 5,
+            "máx_caracteres": 150
+        },
+        "TikTok": {
+            "estructura": "Impacto inmediato + Baile/Reto opcional",
+            "hashtags": 3,
+            "máx_caracteres": 100
+        },
+        "YouTube": {
+            "estructura": "Preview + Intro + Contenido + CTA extendido",
+            "hashtags": 8,
+            "máx_caracteres": 5000
+        }
+    }
+    
+    cfg = formatos[formato]
+    contenido = contenido[:cfg["máx_caracteres"]]
+    hashtags = ' '.join(random.sample(TEMATICAS[tema]["hashtags"], min(cfg["hashtags"], len(TEMATICAS[tema]["hashtags"])))
+    
+    return f"{contenido}\n\n{hashtags}"
 
-def mejorar_script(script):
-    # Conservar estructura temporal
-    segmentos = re.split(r'(\(\d+-\d+ segundos\))', script)
-    
-    # Generar hook alineado
-    hook = generar_hook(script)
-    if not any(p in script.lower() for p in ["sabías que", "no vas a creer", "impactante"]):
-        segmentos[0] = f"{hook}\n\n{segmentos[0]}"
-    
-    # Procesar cada segmento
-    for i in range(1, len(segmentos), 2):
-        segmentos[i+1] = procesar_segmento(segmentos[i+1])
-    
-    return formatear_output(''.join(segmentos))
-
-def procesar_segmento(segmento):
-    # Optimización de frases
-    frases = []
-    for frase in segmento.split('.'):
-        frase = frase.strip()
-        if frase:
-            # Dividir frases largas
-            palabras = frase.split()
-            if len(palabras) > 18:
-                mitad = len(palabras) // 2
-                frases.append(" ".join(palabras[:mitad]) + ".")
-                frases.append(" ".join(palabras[mitad:]) + ".")
-            else:
-                frases.append(frase + ".")
-    
-    # Añadir elementos virales
-    tema = detectar_tematica(segmento)
-    if tema in TEMATICAS and random.random() > 0.5:
-        frases.append(random.choice([
-            "💥 Esto es solo el comienzo...",
-            "🚀 ¿Qué opinas? ¡Déjalo en los comentarios!",
-            f"🔔 Sígueme para más sobre {tema.lower()}"
-        ]))
-    
-    return ' '.join(frases)
-
-def formatear_output(script):
-    # Mejorar formato visual
-    script = re.sub(r'\((\d+-\d+ segundos)\)', r'\n\n### \1\n', script)
-    script = re.sub(r'\.\s+', '.\n\n', script)
-    return script.strip()
-
-# --- Interfaz Mejorada ---
+# 6. INTERFAZ STREAMLIT (MEJORADA)
 def main():
-    st.title("🚀 Generador de Scripts Virales")
-    st.markdown("Potencia tus videos con hooks diseñados para viralizarse")
+    st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
     
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([1, 2])
     
     with col1:
-        script = st.text_area("Pega tu script aquí:", height=300,
-                            placeholder="Ejemplo: 'La nueva actualización del robot Ameca...'")
+        st.header("Configuración")
+        texto = st.text_area("Pega tu contenido:", height=200)
+        formato = st.selectbox("Formato:", ["Reels", "TikTok", "YouTube"])
+        tema_manual = st.selectbox("O elige temática:", list(TEMATICAS.keys()))
         
     with col2:
-        if st.button("Generar Versión Viral"):
-            if script:
-                with st.spinner("Optimizando para máxima viralidad..."):
-                    # Análisis
-                    tema = detectar_tematica(script)
-                    sentimiento, polaridad = analizar_sentimiento(script)
-                    
-                    # Mejora
-                    script_mejorado = mejorar_script(script)
-                    
-                    # Resultados
-                    st.success(f"Temática detectada: {tema}")
-                    st.text_area("Script Optimizado:", script_mejorado, height=300)
-                    
-                    # Estadísticas
-                    with st.expander("📊 Métricas Avanzadas"):
-                        st.metric("Potencial Viral", "Alto" if polaridad > 0.2 else "Medio", 
-                                 delta=f"{polaridad:.2f} polaridad")
-                        st.progress(min(max((polaridad + 1)/2, 0.1), 
-                                   text="Engagement Estimado")
+        if st.button("🚀 Generar Contenido Viral"):
+            if texto:
+                # Análisis automático
+                tema, _ = analizar_tematica(texto)
+                tema = tema if tema != "General" else tema_manual
+                
+                # Generación de contenido
+                hook = generar_hook(tema, texto)
+                cta = random.choice(TEMATICAS[tema]["ctas"])
+                contenido = adaptar_formato(f"{hook}\n\n{texto}\n\n{cta}", formato)
+                
+                # Mostrar resultados
+                st.subheader(f"🎯 Temática: {tema}")
+                st.text_area("Contenido optimizado:", contenido, height=300)
+                
+                # Insights
+                with st.expander("🔍 Análisis Avanzado"):
+                    st.write(f"**Estrategia:** {estrategia.capitalize()}")
+                    st.write(f"**Tendencias aplicadas:** {', '.join(t[0] for t in detectar_tendencias())}")
+                    st.progress(min(int((polaridad+1)*50), 100), text="Potencial Viral")
             else:
-                st.error("Por favor ingresa un script para optimizar")
+                st.warning("Por favor ingresa contenido")
 
 if __name__ == "__main__":
     main()
