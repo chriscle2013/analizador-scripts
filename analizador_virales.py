@@ -11,6 +11,7 @@ from textblob import TextBlob
 import sys
 import spacy
 from nrclex import NRCLex # Para el análisis emocional
+
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
@@ -226,9 +227,13 @@ class HookOptimizer:
 # ======================
 # FUNCIONES AUXILIARES AVANZADAS
 # ======================
+# nlp se definirá en la función main y se pasará aquí si fuera necesario o se usará globalmente
+# Nota: La declaración de nlp se ha movido a la función main() con @st.cache_resource para Streamlit Cloud.
+# Asegúrate de que esta función 'extraer_entidades' esté definida ANTES de HookOptimizer si la vas a usar globalmente.
+# En este código, 'nlp' será una variable global accesible después de su carga en main().
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
-    if nlp is None:
+    if nlp is None: # nlp se carga en main(), es accesible globalmente
         return []
     doc = nlp(texto)
     entidades = []
@@ -314,18 +319,18 @@ def mejorar_script(script, tema):
             script_mejorado.append(linea)
             
             if any(sec in linea for sec in ["(0-3 segundos)", "(3-10 segundos)", "(10-30 segundos)"]):
-                # Corrección: Selección de mejora con operador OR correctamente formateado
+                # Corrección: Selección de mejora con operador OR correctamente formateado
                 mejora_opciones = mejoras_por_tema.get(tema, {}).get("transiciones")
                 if mejora_opciones:
                     mejora = random.choice(mejora_opciones)
                 else:
                     mejora = random.choice(plantillas_genericas["mejora_visual"])
-                
-                # Aplicar reemplazos
-                for k, v in reemplazos.items():
-                    mejora = mejora.replace(k, v)
-                
-                script_mejorado.append(f"✨ MEJORA: {mejora}")
+                
+                # Aplicar reemplazos
+                for k, v in reemplazos.items():
+                    mejora = mejora.replace(k, v)
+                
+                script_mejorado.append(f"✨ MEJORA: {mejora}")
                 
     else:
         frases = [f.strip() for f in re.split(r'[.!?]', script) if f.strip()]
@@ -379,19 +384,13 @@ def generar_hook(tema, reemplazos):
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
-def main():
-    st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
-    
-    # Inicializar sistemas
-    hook_ai = HookOptimizer()
-    hook_ai.entrenar([
-        "Cómo los robots como Ameca están cambiando la industria",
-        "La evolución de los humanoides en 2024",
-        "Ameca vs humanos: ¿Quién es más expresivo?",
-        "Esta tecnología robótica te sorprenderá"
-    ])
- @st.cache_resource # Decorador para que Streamlit cargue esto una sola vez
+# Declarar nlp a nivel global para que extraer_entidades pueda acceder a él.
+# Se inicializará con la función load_spacy_model dentro de main().
+nlp = None 
+
+@st.cache_resource # Decorador para que Streamlit cargue esto una sola vez
 def load_spacy_model():
+    global nlp # Indica que estamos modificando la variable global nlp
     try:
         # Intenta cargar el modelo si ya está descargado
         nlp = spacy.load("es_core_news_sm")
@@ -402,13 +401,28 @@ def load_spacy_model():
         nlp = spacy.load("es_core_news_sm")
     return nlp
 
-nlp = load_spacy_model() # Carga el modelo de SpaCy al inicio de la app   
+def main():
+    st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
+    
+    # Carga el modelo de SpaCy al inicio de la app
+    # La variable global 'nlp' será asignada aquí
+    load_spacy_model() 
+    
+    # Inicializar HookOptimizer después de que nlp esté cargado si genera hooks basados en entidades
+    hook_ai = HookOptimizer()
+    hook_ai.entrenar([
+        "Cómo los robots como Ameca están cambiando la industria",
+        "La evolución de los humanoides en 2024",
+        "Ameca vs humanos: ¿Quién es más expresivo?",
+        "Esta tecnología robótica te sorprenderá"
+    ])
+    
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.header("🎬 Script para Análizar")
+        st.header("🎬 Script para Analizar")
         texto = st.text_area("Pega tu script completo:", height=300,
-                           placeholder="Ej: (0-3 segundos) Video impactante...")
+                             placeholder="Ej: (0-3 segundos) Video impactante...")
         
     with col2:
         if st.button("🚀 Optimizar Contenido"):
