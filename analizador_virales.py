@@ -24,24 +24,50 @@ TEMATICAS = {
         "hashtags": ["#F1", "#Formula1"]
     },
 
-    "Robótica": {
-        "palabras_clave": ["robot", "humanoide", "Ameca", "automatización", "inteligencia artificial", "expresiones faciales", "interacciones", "actualización"],
+    # Robótica
+robotica_temas = {
+    "Robots Humanoides": {
+        "palabras_clave": ["humanoide", "bípedo", "androide", "atlas", "asimo"],
         "hooks": {
-            "impacto": [
-                "{robot} que está redefiniendo lo humano",
-                "La nueva versión de {robot} te sorprenderá",
-                "{robot}: ¿El avance más importante en {año}?"
-            ],
-            "futuro": [
-                "Cómo {robot} está cambiando {industria}",
-                "El futuro de la interacción humano-robot está aquí"
-            ],
-            "comparación": [
-                "{robot} vs Humanos: ¿Quién es más expresivo?",
-                "Nueva {robot}: Más humano que nunca"
-            ]
+            "técnica": ["Los desafíos de la **locomoción bípeda** en {nombre_robot}"],
+            "aplicación": ["Cómo los humanoides están revolucionando la {industria}"],
+            "avance": ["El nuevo sensor de {compañía} que permite a los humanoides {acción_mejorada}"]
         },
-        "hashtags": ["#Robótica", "#IA", "#FuturoTecnológico", "#Ameca", "#Humanoides"]
+        "hashtags": ["#Humanoides", "#RobotsHumanoides", "#Bípedos"]
+    },
+    "Inteligencia Artificial en Robótica": {
+        "palabras_clave": ["ia", "aprendizaje automático", "machine learning", "visión artificial", "deep learning", "algoritmos"],
+        "hooks": {
+            "técnica": ["La **red neuronal** que permite a {robot} reconocer {objeto}"],
+            "aplicación": ["IA para la **navegación autónoma** en {entorno_complejo}"],
+            "impacto": ["Cómo el {algoritmo_ia} está optimizando el {proceso_robotico}"]
+        },
+        "hashtags": ["#AIRobótica", "#IA", "#MachineLearningRobots", "#VisiónArtificial"]
+    },
+    "Robots Colaborativos (Cobots)": {
+        "palabras_clave": ["cobots", "colaborativos", "seguridad", "interacción h-r", "industria 4.0"],
+        "hooks": {
+            "beneficio": ["**Cobots**: Mejorando la {productividad} y la {seguridad} en {sector}"],
+            "implementación": ["Desafíos y soluciones al integrar **cobots** en {tipo_empresa}"],
+            "futuro": ["El rol de los **robots colaborativos** en la {próxima_década}"]
+        },
+        "hashtags": ["#Cobots", "#RobotsColaborativos", "#Industria40"]
+    },
+    "Robótica Médica": {
+        "palabras_clave": ["cirugía robótica", "quirúrgico", "da vinci", "rehabilitación", "exosqueletos", "telemedicina"],
+        "hooks": {
+            "innovación": ["**Robótica médica**: La precisión de {sistema_robotico} en {procedimiento_medico}"],
+            "impacto_paciente": ["Cómo los **exosqueletos** están transformando la {condicion_paciente}"],
+            "futuro": ["La próxima generación de **robots asistenciales** en {ámbito_salud}"]
+        },
+        "hashtags": ["#RobóticaMédica", "#CirugíaRobótica", "#Exoesqueletos", "#SaludDigital"]
+    }
+}
+
+# Ejemplo de cómo acceder a la información:
+print("Palabras clave para Robots Humanoides:", robotica_temas["Robots Humanoides"]["palabras_clave"])
+print("Un hook de aplicación para IA en Robótica:", robotica_temas["Inteligencia Artificial en Robótica"]["hooks"]["aplicación"])
+print("Hashtags para Robótica Médica:", robotica_temas["Robótica Médica"]["hashtags"])
     },
     
     "Fútbol": {
