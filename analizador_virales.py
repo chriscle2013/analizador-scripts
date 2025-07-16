@@ -75,6 +75,17 @@ TEMATICAS = {
         "hashtags": ["#RobóticaMédica", "#CirugíaRobótica", "#Exoesqueletos", "#SaludDigital"]
     },
 
+    # Mascotas
+"Mascotas": {
+    "palabras_clave": ["perro", "gato", "hámster", "pájaro", "mascota", "animales"],
+    "hooks": {
+        "humor": ["Tu mascota también hace ESTO para volverte loco", "¿Listo para reírte? Las travesuras más épicas de {animal}"],
+        "consejo": ["El secreto para que tu {tipo_mascota} deje de {mal_hábito}"],
+        "emocional": ["La historia de {animal} que te derretirá el corazón"]
+    },
+    "hashtags": ["#Mascotas", "#AnimalesGraciosos", "#MascotasVirales"]
+},
+    
     # Mindset
     "Mindset": {
         "palabras_clave": ["éxito", "hábitos", "mentalidad", "crecimiento"],
