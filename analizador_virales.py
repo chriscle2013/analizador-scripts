@@ -12,9 +12,9 @@ import sys
 import spacy
 from nrclex import NRCLex # Para el análisis emocional
 
-# =======================
+# ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
-# =======================
+# ======================
 TEMATICAS = {
     # Deportes
     "Fórmula 1": {
@@ -227,17 +227,24 @@ class HookOptimizer:
 # ======================
 # FUNCIONES AUXILIARES AVANZADAS
 # ======================
-# Cargar el modelo de SpaCy directamente aquí.
-# Como lo instalamos via requirements.txt, estará disponible sin descarga adicional.
+
+# Variable global para el modelo de SpaCy
+nlp = None 
+
 @st.cache_resource # Decorador para que Streamlit cargue esto una sola vez y lo cachee
 def get_spacy_model():
+    # Esta función se encargará de cargar el modelo.
+    # Como ya lo estamos instalando con requirements.txt, solo necesitamos cargarlo.
     return spacy.load("es_core_news_sm")
-
-nlp = get_spacy_model() # Carga el modelo al inicio de la app
 
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
-    # No necesitas verificar si nlp es None aquí porque ya se cargó o la app fallaría antes.
+    # Asegúrate de que nlp se haya cargado antes de llamar a esta función.
+    # En la nueva estructura, nlp se cargará al principio de main().
+    if nlp is None: # Esto ya no debería ser necesario si main() lo carga primero
+        # En un escenario de depuración, podrías querer un fallback o error más claro
+        st.error("Error: Modelo de SpaCy no cargado. Contacta al soporte.")
+        return []
     doc = nlp(texto)
     entidades = []
     for ent in doc.ents:
@@ -388,9 +395,14 @@ def generar_hook(tema, reemplazos):
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
 def main():
+    # 1. Configuración de la página (¡DEBE SER LO PRIMERO!)
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
     
-    # Inicializar HookOptimizer después de que nlp esté cargado si genera hooks basados en entidades
+    # 2. Carga del modelo SpaCy (ahora con la variable global)
+    global nlp # Importante para modificar la variable global nlp
+    nlp = get_spacy_model() # Carga el modelo de SpaCy después de set_page_config
+    
+    # 3. Inicializar sistemas
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
         "Cómo los robots como Ameca están cambiando la industria",
