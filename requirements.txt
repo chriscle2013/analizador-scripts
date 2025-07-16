@@ -8,3 +8,4 @@ python-dotenv==1.0.0
 tweepy==4.14.0
 spacy
 nrclex
+https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.7.0/es_core_news_sm-3.7.0.tar.gz#egg=es_core_news_sm
