@@ -19,37 +19,40 @@ import nltk
 TEMATICAS = {
     # Deportes
     "Fórmula 1": {
-        "palabras_clave": ["f1", "gran premio", "piloto", "carrera", "escudería", "circuito", "clasificación", "trompos", "silverstone", "ferrari", "mercedes", "red bull", "aston martin", "alpine", "alonso", "hamilton", "verstappen", "sainz", "leclerc"], # Añadidas más palabras clave
+        "palabras_clave": ["f1", "gran premio", "piloto", "carrera", "escudería", "circuito", "clasificación", "trompos", "silverstone", "ferrari", "mercedes", "red bull", "aston martin", "alpine", "alonso", "hamilton", "verstappen", "sainz", "leclerc", "pole position", "pole", "vuelta rápida", "victoria", "podio", "adelantamiento", "campeón"], 
         "hooks": {
             "técnica": ["El {sistema} que hizo a {equipo_f1} ganar en {circuito_f1}"],
             "polémica": ["La decisión de la FIA que cambió el {evento_f1_generico}"],
-            "récord": ["{piloto_f1} rompió el récord de {marca} en {año}"],
-            "inesperado": ["¡El {evento_f1_inesperado} más caótico en la historia de {circuito_f1}!", "Los {numero} trompos más salvajes de {evento_f1_generico}"] # NUEVAS PLANTILLAS
+            "récord": ["{piloto_f1} rompió el récord de {marca} en {año}", "La {marca} que le dio la {logro_f1} a {piloto_f1}"], # Añadido
+            "inesperado": ["¡El {evento_f1_inesperado} más caótico en la historia de {circuito_f1}!", "Los {numero} trompos más salvajes de {evento_f1_generico}"],
+            "logro": ["La {logro_f1} de {piloto_f1} que te dejará sin aliento en {circuito_f1}", "Así fue la {logro_f1} de {piloto_f1} en la última vuelta"] # Añadido
         },
-        "hashtags": ["#F1", "#Formula1", "#F1News", "#SilverstoneF1", "#MotorSport"] # Más hashtags
+        "hashtags": ["#F1", "#Formula1", "#F1News", "#SilverstoneF1", "#MotorSport", "#F1Pole"] 
     },
     "Fútbol": {
-        "palabras_clave": ["gol", "partido", "jugador", "liga", "champions", "equipo", "copa", "mundial", "messi", "ronaldo", "mbappe"],
+        "palabras_clave": ["gol", "partido", "jugador", "liga", "champions", "equipo", "copa", "mundial", "messi", "ronaldo", "mbappe", "club", "delantero", "defensa", "portero", "entrenador", "penalti"],
         "hooks": {
             "táctica": ["El {sistema_juego} que hizo campeón a {equipo_futbol}"],
             "polémica": ["El {incidente} más injusto de la historia del fútbol"],
             "dato": ["{jugador_futbol} tiene este récord de {estadística_futbol}"]
         },
-        "hashtags": ["#Fútbol", "#Champions", "#LaLiga", "#FPC"]
+        "hashtags": ["#Fútbol", "#Champions", "#LaLiga", "#FPC", "#Futebol"]
     },
 
     # Robótica
     "Robots Humanoides": {
-        "palabras_clave": ["humanoide", "bípedo", "androide", "atlas", "asimo", "ameca", "engineered arts", "robot"],
+        "palabras_clave": ["humanoide", "bípedo", "androide", "atlas", "asimo", "ameca", "engineered arts", "robot", "optimus", "tesla bot", "autónomo", "ia", "inteligencia artificial", "movimiento", "futuro"],
         "hooks": {
             "técnica": ["Los desafíos de la **locomoción bípeda** en {nombre_robot}"],
             "aplicación": ["Cómo los humanoides están revolucionando la {industria_robotica}"],
-            "avance": ["El nuevo sensor de {compañia_robotica} que permite a los humanoides {accion_mejorada_robotica}"]
+            "avance": ["El nuevo sensor de {compañia_robotica} que permite a los humanoides {accion_mejorada_robotica}"],
+            "impacto": ["Así es {nombre_robot}, el robot humanoide que cambiará el mundo"], # Añadido
+            "demo": ["Mira a {nombre_robot} haciendo ESTO en el laboratorio de {compañia_robotica}"] # Añadido
         },
-        "hashtags": ["#Humanoides", "#RobotsHumanoides", "#Bípedos", "#Ameca", "#FuturoAI"]
+        "hashtags": ["#Humanoides", "#RobotsHumanoides", "#Bípedos", "#Ameca", "#Optimus", "#TeslaBot", "#FuturoAI", "#Robótica"]
     },
     "Inteligencia Artificial en Robótica": {
-        "palabras_clave": ["ia", "aprendizaje automático", "machine learning", "visión artificial", "deep learning", "algoritmos", "inteligencia artificial"],
+        "palabras_clave": ["ia", "aprendizaje automático", "machine learning", "visión artificial", "deep learning", "algoritmos", "inteligencia artificial", "red neuronal", "datos", "autonomía", "percepción"],
         "hooks": {
             "técnica": ["La **red neuronal** que permite a {robot_ia} reconocer {objeto_ia}"],
             "aplicación": ["IA para la **navegación autónoma** en {entorno_complejo}"],
@@ -58,7 +61,7 @@ TEMATICAS = {
         "hashtags": ["#AIRobótica", "#IA", "#MachineLearningRobots", "#VisiónArtificial", "#DeepLearning"]
     },
     "Robots Colaborativos (Cobots)": {
-        "palabras_clave": ["cobots", "colaborativos", "seguridad", "interacción h-r", "industria 4.0", "manufactura"],
+        "palabras_clave": ["cobots", "colaborativos", "seguridad", "interacción h-r", "industria 4.0", "manufactura", "fábrica", "producción", "brazo robótico"],
         "hooks": {
             "beneficio": ["**Cobots**: Mejorando la {productividad} y la {seguridad} en {sector_industrial}"],
             "implementación": ["Desafíos y soluciones al integrar **cobots** en {tipo_empresa}"],
@@ -67,7 +70,7 @@ TEMATICAS = {
         "hashtags": ["#Cobots", "#RobotsColaborativos", "#Industria40", "#Automatización"]
     },
     "Robótica Médica": {
-        "palabras_clave": ["cirugía robótica", "quirúrgico", "da vinci", "rehabilitación", "exosqueletos", "telemedicina", "salud", "hospital"],
+        "palabras_clave": ["cirugía robótica", "quirúrgico", "da vinci", "rehabilitación", "exosqueletos", "telemedicina", "salud", "hospital", "paciente", "diagnóstico", "asistencia"],
         "hooks": {
             "innovación": ["**Robótica médica**: La precisión de {sistema_robotico_medico} en {procedimiento_medico}"],
             "impacto_paciente": ["Cómo los **exosqueletos** están transformando la {condicion_paciente}"],
@@ -78,40 +81,40 @@ TEMATICAS = {
 
     # Mascotas
     "Mascotas": {
-        "palabras_clave": ["perro", "gato", "hámster", "pájaro", "mascota", "animales", "cachorros", "golden retriever", "labrador", "loro", "periquito", "conejo", "hurón"],
+        "palabras_clave": ["perro", "gato", "hámster", "pájaro", "mascota", "animales", "cachorros", "golden retriever", "labrador", "loro", "periquito", "conejo", "hurón", "cola", "patas", "dueño", "veterinario", "juguetes", "cajas", "morder", "arañar", "pelaje", "ronroneo"],
         "hooks": {
             "humor": ["Tu mascota también hace ESTO para volverte loco", "¿Listo para reírte? Las travesuras más épicas de {animal_mascota}"],
             "consejo": ["El secreto para que tu {tipo_mascota} deje de {mal_habito_mascota}"],
             "emocional": ["La historia de {animal_mascota} que te derretirá el corazón"]
         },
-        "hashtags": ["#Mascotas", "#AnimalesGraciosos", "#MascotasVirales", "#PetsOfTikTok", "#AmorAnimal"]
+        "hashtags": ["#Mascotas", "#AnimalesGraciosos", "#MascotasVirales", "#PetsOfTikTok", "#AmorAnimal", "#Gatos", "#Perros"]
     },
 
     # Mindset
     "Mindset": {
-        "palabras_clave": ["éxito", "hábitos", "mentalidad", "crecimiento", "productividad", "motivación", "superación"],
+        "palabras_clave": ["éxito", "hábitos", "mentalidad", "crecimiento", "productividad", "motivación", "superación", "bienestar", "felicidad", "procrastinación", "metas", "disciplina"],
         "hooks": {
             "científico": ["Estudio de Harvard prueba que {hábito_mindset} aumenta {metrica_mindset}"],
             "inspiración": ["Cómo {persona_mindset} pasó de {situacion_mindset} a {logro_mindset}"],
             "acción": ["Si haces esto cada mañana, tu vida cambiará en {tiempo_mindset}"]
         },
-        "hashtags": ["#Mindset", "#CrecimientoPersonal", "#Motivacion", "#Productividad"]
+        "hashtags": ["#Mindset", "#CrecimientoPersonal", "#Motivacion", "#Productividad", "#DesarrolloPersonal"]
     },
 
     # Finanzas
     "Finanzas": {
-        "palabras_clave": ["dinero", "inversión", "ahorro", "finanzas", "criptomonedas", "bolsa", "negocios", "emprendimiento"],
+        "palabras_clave": ["dinero", "inversión", "ahorro", "finanzas", "criptomonedas", "bolsa", "negocios", "emprendimiento", "bitcoin", "acciones", "mercado", "dólar", "euros", "impuestos", "ingresos", "gastos"],
         "hooks": {
             "impacto": ["Cómo ahorré {cantidad_dinero} en {tiempo_finanzas} con {metodo_finanzas}"],
             "error": ["El error que te hace perder {porcentaje_finanzas}% de tus ingresos"],
             "sistema": ["El método {nombre_metodo} para multiplicar tu dinero"]
         },
-        "hashtags": ["#Finanzas", "#Ahorro", "#Inversión", "#Dinero", "#Emprendimiento"]
+        "hashtags": ["#Finanzas", "#Ahorro", "#Inversión", "#Dinero", "#Emprendimiento", "#Cripto"]
     },
 
     # Tecnología (General)
     "Tecnología": {
-        "palabras_clave": ["robot", "ia", "tecnología", "automatización", "innovación", "gadget", "futuro", "ciencia"],
+        "palabras_clave": ["robot", "ia", "tecnología", "automatización", "innovación", "gadget", "futuro", "ciencia", "dispositivo", "software", "hardware", "app", "metaverso", "realidad virtual", "ciberseguridad"],
         "hooks": {
             "futuro": ["Cómo {tecnologia_general} cambiará {industria_general} en {año}"],
             "comparación": ["{ProductoA_tech} vs {ProductoB_tech}: ¿Cuál gana?"],
@@ -149,7 +152,7 @@ class HookOptimizer:
             return False
 
     def generar_hook_optimizado(self, texto, tema):
-        """Genera hooks contextuales usando detección de entidades del script."""
+        """Genera hooks contextuales usando detección de entidades del script y la temática."""
         try:
             # Extraer entidades usando SpaCy
             personas = extraer_entidades(texto, "PER")
@@ -171,50 +174,58 @@ class HookOptimizer:
             if tema in TEMATICAS:
                 hooks_tema = TEMATICAS[tema]["hooks"]
                 
-                # Prioritize 'inesperado' strategy if relevant keywords are found for F1
-                # or 'humor' for pets if the script is about funny animal behavior
-                estrategia = random.choice(list(hooks_tema.keys())) # Default random choice
+                # Lógica mejorada para seleccionar la estrategia del hook
+                estrategia = random.choice(list(hooks_tema.keys())) # Opción por defecto
                 
                 if tema == "Fórmula 1":
                     if re.search(r'\b(trompos|spin|accidente|caos|inesperado)\b', texto.lower()) and "inesperado" in hooks_tema:
                         estrategia = "inesperado"
+                    elif re.search(r'\b(pole|victoria|ganar|récord|campeón|última vuelta)\b', texto.lower()) and ("logro" in hooks_tema or "récord" in hooks_tema):
+                        estrategia = random.choice(["logro", "récord"]) # Priorizar logros
+                    elif re.search(r'\b(polémica|fia|sanción|protesta)\b', texto.lower()) and "polémica" in hooks_tema:
+                        estrategia = "polémica"
                 elif tema == "Mascotas":
                     if re.search(r'\b(chistoso|gracioso|divertido|travesuras|humor)\b', texto.lower()) and "humor" in hooks_tema:
                         estrategia = "humor"
+                elif tema == "Robots Humanoides": # Para el caso de Optimus
+                    if re.search(r'\b(optimus|tesla bot|movimiento|precisión|eficiencia|futuro)\b', texto.lower()) and ("impacto" in hooks_tema or "demo" in hooks_tema):
+                        estrategia = random.choice(["impacto", "demo"])
                 
-                plantilla = random.choice(hooks_tema[estrategia])
+                plantilla = random.choice(hooks_tema.get(estrategia, list(hooks_tema.values())[0])) # Fallback si la estrategia no existe
 
                 hook = plantilla
                 
                 # REEMPLAZOS ESPECÍFICOS POR TEMÁTICA
                 if tema == "Fórmula 1":
-                    if "{piloto_f1}" in hook: hook = hook.replace("{piloto_f1}", random.choice(f1_pilotos) if f1_pilotos else random.choice(["Verstappen", "Hamilton"]))
-                    if "{equipo_f1}" in hook: hook = hook.replace("{equipo_f1}", random.choice(f1_equipos) if f1_equipos else random.choice(["Red Bull", "Ferrari"]))
-                    if "{circuito_f1}" in hook: hook = hook.replace("{circuito_f1}", random.choice(f1_circuitos) if f1_circuitos else random.choice(["Silverstone", "Mónaco"]))
-                    if "{evento_f1_generico}" in hook: hook = hook.replace("{evento_f1_generico}", random.choice(["Gran Premio", "clasificación", "carrera"]))
+                    if "{piloto_f1}" in hook: hook = hook.replace("{piloto_f1}", random.choice(f1_pilotos) if f1_pilotos else random.choice(["Verstappen", "Hamilton", "Leclerc"]))
+                    if "{equipo_f1}" in hook: hook = hook.replace("{equipo_f1}", random.choice(f1_equipos) if f1_equipos else random.choice(["Red Bull", "Ferrari", "Mercedes"]))
+                    if "{circuito_f1}" in hook: hook = hook.replace("{circuito_f1}", random.choice(f1_circuitos) if f1_circuitos else random.choice(["Silverstone", "Mónaco", "Spa"]))
+                    if "{evento_f1_generico}" in hook: hook = hook.replace("{evento_f1_generico}", random.choice(["Gran Premio", "clasificación", "carrera", "Q3"]))
                     if "{evento_f1_inesperado}" in hook: hook = hook.replace("{evento_f1_inesperado}", random.choice(["Gran Premio", "sesión de clasificación"]))
-                    if "{numero}" in hook: hook = hook.replace("{numero}", str(random.randint(3, 10))) # For "Los X trompos"
+                    if "{numero}" in hook: hook = hook.replace("{numero}", str(random.randint(3, 10))) 
+                    if "{marca}" in hook: hook = hook.replace("{marca}", random.choice(["velocidad récord", "tiempo más rápido", "vuelta imbatible"]))
+                    if "{logro_f1}" in hook: hook = hook.replace("{logro_f1}", random.choice(["Pole Position", "victoria épica", "vuelta de la vida"]))
 
                 elif tema == "Mascotas":
                     if "{animal_mascota}" in hook:
                         if nombres_animales_en_script:
                             hook = hook.replace("{animal_mascota}", random.choice(nombres_animales_en_script))
-                        elif personas: # If there are proper names (e.g. Firulais)
+                        elif personas: 
                             hook = hook.replace("{animal_mascota}", random.choice(personas))
-                        else: # General fallback
+                        else: 
                             hook = hook.replace("{animal_mascota}", random.choice(["tu adorable mascota", "este peludo amigo", "este travieso animal"]))
 
                     if "{tipo_mascota}" in hook:
                         if nombres_animales_en_script:
                             hook = hook.replace("{tipo_mascota}", random.choice(nombres_animales_en_script))
-                        else: # General fallback
+                        else: 
                             hook = hook.replace("{tipo_mascota}", random.choice(["perro", "gato", "loro", "hámster"]))
 
                     if "{mal_habito_mascota}" in hook:
                         hook = hook.replace("{mal_habito_mascota}", random.choice(["ladrar mucho", "arañar muebles", "morder cables", "comerse los zapatos"]))
 
                 # REEMPLAZOS GENÉRICOS (for placeholders that can appear in multiple themes)
-                if "{año}" in hook: hook = hook.replace("{año}", str(datetime.now().year))
+                if "{año}" in hook: hook = hook.replace("{año}", str(datetime.now().year + 1)) # Año futuro para F1 2025
                 if "{marca}" in hook: hook = hook.replace("{marca}", "velocidad récord")
                 if "{incidente}" in hook: hook = hook.replace("{incidente}", "incidente polémico")
                 if "{dato_impactante}" in hook: hook = hook.replace("{dato_impactante}", "un dato sorprendente")
@@ -224,9 +235,9 @@ class HookOptimizer:
                 if "{sistema}" in hook: hook = hook.replace("{sistema}", "sistema secreto") # Fallback for {system}
 
                 # Robotics
-                if "{nombre_robot}" in hook: hook = hook.replace("{nombre_robot}", random.choice(productos) if productos else "Ameca")
+                if "{nombre_robot}" in hook: hook = hook.replace("{nombre_robot}", random.choice(productos) if productos else "Optimus")
                 if "{industria_robotica}" in hook: hook = hook.replace("{industria_robotica}", "la manufactura")
-                if "{compañia_robotica}" in hook: hook = hook.replace("{compañia_robotica}", random.choice(organizaciones) if organizaciones else "Engineered Arts")
+                if "{compañia_robotica}" in hook: hook = hook.replace("{compañia_robotica}", random.choice(organizaciones) if organizaciones else "Tesla")
                 if "{accion_mejorada_robotica}" in hook: hook = hook.replace("{accion_mejorada_robotica}", "navegar con destreza")
                 if "{robot_ia}" in hook: hook = hook.replace("{robot_ia}", random.choice(productos) if productos else "un robot de IA")
                 if "{objeto_ia}" in hook: hook = hook.replace("{objeto_ia}", "objetos complejos")
@@ -307,42 +318,78 @@ def extraer_entidades(texto, tipo_entidad=None):
 def analizar_tematica(texto):
     """Detección mejorada de temática con mayor confianza por palabra clave."""
     scores = defaultdict(int)
+    texto_lower = texto.lower() # Convertir a minúsculas una vez para eficiencia
+
     for tema, data in TEMATICAS.items():
+        conteo_palabras_clave = 0
         for palabra in data["palabras_clave"]:
             # Usamos re.search para encontrar la palabra completa, no solo substrings
-            # y añadimos peso a las palabras clave para mayor precisión
-            if re.search(rf"\b{palabra}\b", texto.lower()):
-                scores[tema] += 1
+            # re.escape() asegura que caracteres especiales en la palabra clave se manejen correctamente
+            if re.search(r"\b" + re.escape(palabra) + r"\b", texto_lower):
+                conteo_palabras_clave += 1
+        
+        # Asignar el score directamente al conteo de palabras clave
+        scores[tema] = conteo_palabras_clave
     
     if not scores:
         return ("General", 0)
     
-    mejor_tema, puntaje = max(scores.items(), key=lambda x: x[1])
-    confianza = min(100, puntaje * 20) # Escala a porcentaje, 5 palabras clave = 100%
+    mejor_tema = "General"
+    max_puntaje = 0
+    
+    # Encontrar el mejor tema basado en el puntaje más alto
+    for tema, puntaje in scores.items():
+        if puntaje > max_puntaje:
+            max_puntaje = puntaje
+            mejor_tema = tema
+    
+    # Calcular la confianza: cada palabra clave contribuye con un % fijo
+    # Por ejemplo, 5 palabras clave = 100% de confianza si el factor es 20.
+    confianza = min(100, max_puntaje * 20) 
+
+    # Umbral de confianza: Si el mejor tema tiene muy baja confianza, categorizar como "General"
+    # Este umbral previene clasificaciones erróneas cuando hay muy pocas coincidencias.
+    if confianza < 30 and mejor_tema != "General": # Solo si no es ya el tema "General"
+        return ("General", 0) 
+
     return (mejor_tema, confianza)
 
 def mejorar_script(script, tema, pre_generated_hook=None):
     """Mejora scripts para cualquier temática con técnicas virales."""
-    # Detectar si el script ya tiene marcas de tiempo explícitas
-    # Se ajustó el regex para ser más flexible con 's' o 'segundos' y ser case-insensitive
-    segmentos_temporales = re.findall(r"(\(\d+-\d+\s*(?:segundos|s)\).*)", script, re.IGNORECASE)
+    # Detectar si el script ya tiene marcas de tiempo explícitas o marcadores de escena
+    # Regex para timestamps (0-3s) o (0-3 segundos)
+    # Regex para Escena X:
+    segmentos_temporales = re.findall(r"(\(\d+-\d+\s*(?:segundos|s)\).*|Escena \d+:.*)", script, re.IGNORECASE)
     tiene_estructura = bool(segmentos_temporales)
     
     mejoras_por_tema = {
-        "Robótica": {
+        "Robótica": { # General para robótica
             "transiciones": ["SFX: Sonido futurista activándose", "Corte rápido a detalle de mecanismo", "✨ MEJORA: Toma de Ameca expresando una emoción sutil"],
+            "logro": ["✨ MEJORA: Animación de engranajes o chips", "✨ MEJORA: Texto dinámico: '¡Ingeniería Maestra!'"],
+            "impacto": ["✨ MEJORA: Zoom dramático en la cara del robot", "✨ MEJORA: Gráfico de datos en movimiento"]
+        },
+        "Robots Humanoides": { # Específico para humanoides como Optimus
+            "transiciones": ["SFX: Sonido de servos suaves", "Corte a detalle de articulación", "✨ MEJORA: Toma que resalta la fluidez del movimiento", "✨ MEJORA: Close-up a los ojos de Optimus"],
+            "logro": ["✨ MEJORA: Animación de engranajes o chips", "✨ MEJORA: Texto dinámico: '¡Ingeniería Maestra!'"],
+            "impacto": ["✨ MEJORA: Zoom dramático en la cara del robot", "✨ MEJORA: Gráfico de datos en movimiento", "✨ MEJORA: Montaje de aplicaciones diversas del robot"]
         },
         "Fútbol": {
             "transiciones": ["SFX: Hinchada rugiendo", "Slow motion de jugada clave", "✨ MEJORA: Gráfico animado de estadística de jugador"],
+            "logro": ["✨ MEJORA: Repetición en cámara lenta del gol", "✨ MEJORA: Gráfico de 'heatmap' de la cancha"]
         },
         "Finanzas": {
             "transiciones": ["Gráfico animado de crecimiento/caída", "Zoom a cifras clave", "SFX: Sonido de calculadora o transacción"],
+            "logro": ["✨ MEJORA: Gráfico de barra de crecimiento", "✨ MEJORA: Montaje de billetes o monedas"]
         },
         "Mascotas": {
             "transiciones": ["SFX: Sonido de risas o asombro", "Corte a cara de sorpresa del dueño", "Música divertida subiendo", "✨ MEJORA: Primer plano a la expresión traviesa de la mascota"],
+            "consejo": ["✨ MEJORA: Lista de consejos en pantalla", "✨ MEJORA: Demostración visual de la solución"]
         },
         "Fórmula 1": {
             "transiciones": ["SFX: Chirrido de neumáticos", "Cámara lenta del trompo", "✨ MEJORA: Toma en cabina del piloto reaccionando", "Corte rápido entre diferentes ángulos de la acción"],
+            "logro": ["✨ MEJORA: Gráfico de tiempos de vuelta subiendo a P1", "✨ MEJORA: Celebración en el pit wall", "✨ MEJORA: Cámara lenta del cruce de meta"], # Añadido
+            "velocidad": ["✨ MEJORA: Efecto de velocidad en el coche", "✨ MEJORA: Onboard a toda velocidad"], # Añadido
+            "pole": ["✨ MEJORA: Tabla de tiempos resaltando P1", "✨ MEJORA: Onboard de vuelta clasificatoria"], # Añadido
         }
     }
     
@@ -350,7 +397,7 @@ def mejorar_script(script, tema, pre_generated_hook=None):
     reemplazos_genericos = {
         "{numero}": str(random.randint(10, 60)),
         "{cantidad}": str(random.randint(1, 10)),
-        "{pregunta}": "¿Qué te pareció?", # para la CTA genérica
+        "{pregunta}": "¿Qué te pareció?", 
     }
     
     plantillas_genericas = {
@@ -373,12 +420,24 @@ def mejorar_script(script, tema, pre_generated_hook=None):
         for i, linea in enumerate(lineas):
             script_final_mejorado.append(linea) # Siempre incluye la línea original
             
-            # Si la línea contiene una marca de tiempo, añade una mejora visual después
-            if re.search(r"^\(\d+-\d+\s*(?:segundos|s)\)", linea, re.IGNORECASE):
+            # Si la línea contiene una marca de tiempo o un marcador de Escena
+            if re.search(r"^\(\d+-\d+\s*(?:segundos|s)\)", linea, re.IGNORECASE) or re.search(r"^Escena \d+:", linea, re.IGNORECASE):
                 mejora_opciones = mejoras_por_tema.get(tema, {}).get("transiciones")
+                
+                # Lógica para seleccionar una mejora más específica si el contexto lo permite
+                if tema == "Fórmula 1":
+                    if re.search(r'\b(pole|q3|última vuelta|verstappen)\b', linea.lower()):
+                        mejora_opciones = mejoras_por_tema["Fórmula 1"].get("pole", mejoras_por_tema["Fórmula 1"].get("logro"))
+                    elif re.search(r'\b(trompos|spin)\b', linea.lower()):
+                        mejora_opciones = mejoras_por_tema["Fórmula 1"].get("transiciones") # Las de trompo ya están aquí
+                elif tema == "Robots Humanoides" or tema == "Robótica": # Para Optimus
+                    if re.search(r'\b(precisión|eficiencia|movilidad|diseñado)\b', linea.lower()):
+                         mejora_opciones = mejoras_por_tema["Robots Humanoides"].get("impacto", mejoras_por_tema["Robots Humanoides"].get("transiciones"))
+
+
                 if mejora_opciones:
                     mejora = random.choice(mejora_opciones)
-                else: # Fallback a mejoras visuales genéricas
+                else: # Fallback a mejoras visuales genéricas si no hay específicas
                     mejora = random.choice(plantillas_genericas["mejora_visual"])
                 
                 # Aplicar reemplazos genéricos a la mejora
@@ -389,7 +448,6 @@ def mejorar_script(script, tema, pre_generated_hook=None):
                 script_final_mejorado.append(f"✨ MEJORA: {mejora}")
                 
         # Al final del script con estructura, añadir un CTA si no se incluyó ya
-        # Se verifica si un CTA obvio ya está presente en las últimas líneas del script *original*
         cta_already_present_in_original = any(re.search(r"(comenta|suscribe|siguenos|cta|subscribe)", l.lower()) for l in script.split('\n')[-7:])
 
         if not cta_already_present_in_original:
@@ -480,7 +538,10 @@ def main():
         "¿Por qué este golden retriever es viral?",
         "¡Los 5 trompos más locos de la F1 en Silverstone!",
         "La verdad sobre el rendimiento de Ferrari en F1",
-        "El error de Hamilton que le costó la carrera"
+        "El error de Hamilton que le costó la carrera",
+        "Max Verstappen se llevó la pole en el último segundo en Silverstone", # Añadido
+        "El gato más destructor de cajas del mundo", # Añadido
+        "Optimus de Tesla: el robot que revoluciona las fábricas" # Añadido
     ])
     
     col1, col2 = st.columns([1, 2])
@@ -511,7 +572,7 @@ def main():
                     
                     st.text_area("Hook Viral Recomendado:", value=generated_hook, height=100) 
                     
-                    st.text_area("Script Optimizado:", value=script_mejorado, height=450) # Aumentado el tamaño
+                    st.text_area("Script Optimizado:", value=script_mejorado, height=450) 
                     
                     with st.expander("📊 Análisis Avanzado"):
                         st.metric("Sentimiento General",
