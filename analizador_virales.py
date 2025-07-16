@@ -13,10 +13,6 @@ import spacy
 from nrclex import NRCLex
 import nltk
 
-# --- ¡CAMBIO CRUCIAL AQUÍ! ---
-# st.set_page_config DEBE ser la primera llamada a un comando de Streamlit.
-st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
-
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
@@ -305,6 +301,8 @@ class HookOptimizer:
 # FUNCIONES AUXILIARES AVANZADAS
 # ======================
 
+nlp = None 
+
 @st.cache_resource
 def get_spacy_model():
     """Carga el modelo de SpaCy para español."""
@@ -314,23 +312,6 @@ def get_spacy_model():
         st.error("Modelo 'es_core_news_sm' de SpaCy no encontrado. Intentando descargar...")
         spacy.cli.download("es_core_news_sm")
         return spacy.load("es_core_news_sm")
-
-@st.cache_resource
-def download_nltk_data():
-    """Descarga los recursos de NLTK necesarios."""
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except nltk.downloader.DownloadError:
-        nltk.download('punkt')
-    try:
-        nltk.data.find('taggers/averaged_perceptron_tagger')
-    except nltk.downloader.DownloadError:
-        nltk.download('averaged_perceptron_tagger')
-
-# Inicializa 'nlp' una única vez al cargar el script.
-# Esto asegura que 'nlp' siempre esté definido y sea accesible globalmente.
-nlp = get_spacy_model()
-
 
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
@@ -350,13 +331,17 @@ def extraer_entidades(texto, tipo_entidad=None):
 def analizar_tematica(texto):
     """Detección mejorada de temática con mayor confianza por palabra clave."""
     scores = defaultdict(int)
-    texto_lower = texto.lower() 
+    texto_lower = texto.lower() # Convertir a minúsculas una vez para eficiencia
 
     for tema, data in TEMATICAS.items():
         conteo_palabras_clave = 0
         for palabra in data["palabras_clave"]:
+            # Usamos re.search para encontrar la palabra completa, no solo substrings
+            # re.escape() asegura que caracteres especiales en la palabra clave se manejen correctamente
             if re.search(r"\b" + re.escape(palabra) + r"\b", texto_lower):
                 conteo_palabras_clave += 1
+        
+        # Asignar el score directamente al conteo de palabras clave
         scores[tema] = conteo_palabras_clave
     
     if not scores:
@@ -365,30 +350,38 @@ def analizar_tematica(texto):
     mejor_tema = "General"
     max_puntaje = 0
     
+    # Encontrar el mejor tema basado en el puntaje más alto
     for tema, puntaje in scores.items():
         if puntaje > max_puntaje:
             max_puntaje = puntaje
             mejor_tema = tema
     
+    # Calcular la confianza: cada palabra clave contribuye con un % fijo
+    # Por ejemplo, 5 palabras clave = 100% de confianza si el factor es 20.
     confianza = min(100, max_puntaje * 20) 
 
-    if confianza < 30 and mejor_tema != "General": 
+    # Umbral de confianza: Si el mejor tema tiene muy baja confianza, categorizar como "General"
+    # Este umbral previene clasificaciones erróneas cuando hay muy pocas coincidencias.
+    if confianza < 30 and mejor_tema != "General": # Solo si no es ya el tema "General"
         return ("General", 0) 
 
     return (mejor_tema, confianza)
 
 def mejorar_script(script, tema, pre_generated_hook=None):
     """Mejora scripts para cualquier temática con técnicas virales."""
+    # Detectar si el script ya tiene marcas de tiempo explícitas o marcadores de escena
+    # Regex para timestamps (0-3s) o (0-3 segundos)
+    # Regex para Escena X:
     segmentos_temporales = re.findall(r"(\(\d+-\d+\s*(?:segundos|s)\).*|Escena \d+:.*)", script, re.IGNORECASE)
     tiene_estructura = bool(segmentos_temporales)
     
     mejoras_por_tema = {
-        "Robótica": { 
+        "Robótica": { # General para robótica
             "transiciones": ["SFX: Sonido futurista activándose", "Corte rápido a detalle de mecanismo", "Toma de Ameca expresando una emoción sutil"],
             "logro": ["Animación de engranajes o chips", "Texto dinámico: '¡Ingeniería Maestra!'"],
             "impacto": ["Zoom dramático en la cara del robot", "Gráfico de datos en movimiento"]
         },
-        "Robots Humanoides": { 
+        "Robots Humanoides": { # Específico para humanoides como Optimus
             "transiciones": ["SFX: Sonido de servos suaves", "Corte a detalle de articulación", "Toma que resalta la fluidez del movimiento", "Close-up a los ojos de Optimus"],
             "logro": ["Animación de engranajes o chips", "Texto dinámico: '¡Ingeniería Maestra!'"],
             "impacto": ["Zoom dramático en la cara del robot", "Gráfico de datos en movimiento", "Montaje de aplicaciones diversas del robot"]
@@ -409,10 +402,11 @@ def mejorar_script(script, tema, pre_generated_hook=None):
             "transiciones": ["SFX: Chirrido de neumáticos", "Cámara lenta del trompo", "Toma en cabina del piloto reaccionando", "Corte rápido entre diferentes ángulos de la acción"],
             "logro": ["Gráfico de tiempos de vuelta subiendo a P1", "Celebración en el pit wall", "Cámara lenta del cruce de meta"], 
             "velocidad": ["Efecto de velocidad en el coche", "Onboard a toda velocidad"], 
-            "pole": ["Tabla de tiempos resaltando P1", "Onboard de vuelta clasificatoria", "Toma en cabina del piloto reaccionando"], 
+            "pole": ["Tabla de tiempos resaltando P1", "Onboard de vuelta clasificatoria", "Toma en cabina del piloto reaccionando"], # Añadido 'Toma en cabina...'
         }
     }
     
+    # Reemplazos genéricos para mejoras y CTA
     reemplazos_genericos = {
         "{numero}": str(random.randint(10, 60)),
         "{cantidad}": str(random.randint(1, 10)),
@@ -437,11 +431,13 @@ def mejorar_script(script, tema, pre_generated_hook=None):
         lineas = script.split('\n')
         
         for i, linea in enumerate(lineas):
-            script_final_mejorado.append(linea) 
+            script_final_mejorado.append(linea) # Siempre incluye la línea original
             
+            # Si la línea contiene una marca de tiempo o un marcador de Escena
             if re.search(r"^\(\d+-\d+\s*(?:segundos|s)\)", linea, re.IGNORECASE) or re.search(r"^Escena \d+:", linea, re.IGNORECASE):
                 mejora_opciones = mejoras_por_tema.get(tema, {}).get("transiciones")
                 
+                # Lógica para seleccionar una mejora más específica si el contexto lo permite
                 if tema == "Fórmula 1":
                     if re.search(r'\b(pole|q3|última vuelta|verstappen)\b', linea.lower()):
                         mejora_opciones = mejoras_por_tema["Fórmula 1"].get("pole", mejoras_por_tema["Fórmula 1"].get("logro"))
@@ -457,14 +453,17 @@ def mejorar_script(script, tema, pre_generated_hook=None):
                 else: 
                     mejora = random.choice(plantillas_genericas["mejora_visual"])
                 
+                # Aplicar reemplazos genéricos a la mejora
                 for k, v in reemplazos_genericos.items():
                     mejora = mejora.replace(k, v)
                 
+                # CORRECCIÓN: Asegurarse de que "✨ MEJORA: " no se duplique
                 if not mejora.strip().startswith("✨ MEJORA:"):
                     script_final_mejorado.append(f"✨ MEJORA: {mejora}")
                 else:
-                    script_final_mejorado.append(mejora) 
+                    script_final_mejorado.append(mejora) # Si ya tiene el prefijo, lo añade directamente
                 
+        # Al final del script con estructura, añadir un CTA si no se incluyó ya
         cta_already_present_in_original = any(re.search(r"(comenta|suscribe|siguenos|cta|subscribe)", l.lower()) for l in script.split('\n')[-7:])
 
         if not cta_already_present_in_original:
@@ -474,26 +473,28 @@ def mejorar_script(script, tema, pre_generated_hook=None):
             script_final_mejorado.append(f"\n(FINAL) 📲 LLAMADA A LA ACCIÓN: {llamado_accion_gen}")
             script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
             
-    else: 
+    else: # Si el script NO tiene una estructura temporal explícita
+        # Usamos el hook pre-generado si existe, de lo contrario generamos uno genérico
         gancho_a_usar = pre_generated_hook if pre_generated_hook else generar_hook(tema, reemplazos_genericos)
         llamado_accion_gen = random.choice(plantillas_genericas["llamado_accion"])
         for k, v in reemplazos_genericos.items():
             llamado_accion_gen = llamado_accion_gen.replace(k, v)
         
         script_final_mejorado.append(f"(0-5 segundos) 🎯 GANCHO INICIAL: {gancho_a_usar}")
-        script_final_mejorado.append("\n" + script.strip() + "\n") 
+        script_final_mejorado.append("\n" + script.strip() + "\n") # Inserta el script original completo
         script_final_mejorado.append(f"(FINAL) 📲 LLAMADA A LA ACCIÓN: {llamado_accion_gen}")
         script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
 
     script_final = '\n'.join(script_final_mejorado)
     
+    # Añadir hashtags al final
     hashtags = TEMATICAS.get(tema, {}).get("hashtags", ["#Viral", "#Trending"])
-    script_final += f"\n\n🔖 HASHTAGS: {' '.join(hashtags[:4])}" 
+    script_final += f"\n\n🔖 HASHTAGS: {' '.join(hashtags[:4])}" # Limita a 4 hashtags para mayor impacto
     
     return script_final
 
 def generar_hook(tema, reemplazos):
-    """Genera hooks para una temática dada."""
+    """Genera hooks temáticos dinámicos (usado como fallback o para hooks genéricos)."""
     hooks_tema = TEMATICAS.get(tema, {}).get("hooks", {})
     hooks_genericos = {
         "impacto": ["Lo que nadie te dijo sobre {tema}"],
@@ -511,6 +512,7 @@ def generar_hook(tema, reemplazos):
     
     hook = random.choice(hooks_disponibles) if hooks_disponibles else "Descubre esto que cambiará tu perspectiva"
     
+    # Aplicar reemplazos generales a los hooks generados aquí
     for k, v in reemplazos.items():
         hook = hook.replace(k, v)
     
@@ -519,15 +521,28 @@ def generar_hook(tema, reemplazos):
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
+
+@st.cache_resource
+def download_nltk_data():
+    """Descarga los recursos de NLTK necesarios."""
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except nltk.downloader.DownloadError:
+        nltk.download('punkt')
+    try:
+        nltk.data.find('taggers/averaged_perceptron_tagger')
+    except nltk.downloader.DownloadError:
+        nltk.download('averaged_perceptron_tagger')
     
 def main():
-    # Eliminamos download_nltk_data() y nlp = get_spacy_model() de aquí
-    # porque ya se llaman fuera de main() con @st.cache_resource.
-    # Pero las llamadas a las funciones NLTK y SpaCy deben ir *después* de st.set_page_config()
-    # y deben ser llamadas antes de usarse, lo cual se hace aquí.
+    st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
+    
     download_nltk_data()
-    # nlp ya se inicializó globalmente después de set_page_config
 
+    global nlp 
+    nlp = get_spacy_model() # Carga el modelo de SpaCy al inicio
+
+    # Entrenar el optimizador de hooks con ejemplos relevantes
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
         "Cómo los robots como Ameca están cambiando la industria",
@@ -543,40 +558,32 @@ def main():
         "Max Verstappen se llevó la pole en el último segundo en Silverstone", 
         "El gato más destructor de cajas del mundo", 
         "Optimus de Tesla: el robot que revoluciona las fábricas",
-        "Mira a Optimus haciendo esto en el laboratorio de Tesla", 
-        "La precisión de Optimus en tareas delicadas" 
+        "Mira a Optimus haciendo esto en el laboratorio de Tesla", # Agregado para el entrenamiento
+        "La precisión de Optimus en tareas delicadas" # Agregado para el entrenamiento
     ])
     
     col1, col2 = st.columns([1, 2])
     
     with col1:
         st.header("🎬 Script para Analizar")
+        texto = st.text_area("Pega tu script completo:", height=300,
+                             placeholder="Ej: (0-3 segundos) Video impactante...")
         
-        if 'script_content' not in st.session_state:
-            st.session_state.script_content = ""
-
-        texto = st.text_area("Pega tu script completo:", 
-                             height=300,
-                             placeholder="Ej: (0-3 segundos) Video impactante...",
-                             key="script_input_area", 
-                             value=st.session_state.script_content) 
-        
-        if st.button("🗑️ Borrar Script", key="clear_script_button"):
-            st.session_state.script_content = "" 
-            st.experimental_rerun() 
-
     with col2:
         if st.button("🚀 Optimizar Contenido"):
-            if texto: 
+            if texto:
                 with st.spinner("Analizando y mejorando..."):
                     tema, confianza = analizar_tematica(texto)
                     blob = TextBlob(texto) 
                     polaridad = blob.sentiment.polarity
                     
+                    # Generamos el hook principal aquí
                     generated_hook = hook_ai.generar_hook_optimizado(texto, tema) 
                     
+                    # Pasamos el hook principal a mejorar_script
                     script_mejorado = mejorar_script(texto, tema, pre_generated_hook=generated_hook)
                     
+                    # Los hashtags ahora se generan dentro de mejorar_script, solo se muestran aquí
                     hashtags_display = ' '.join(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"]))
 
                     st.subheader(f"🎯 Temática: **{tema}** (Confianza: **{confianza}%**)")
