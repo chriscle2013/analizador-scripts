@@ -320,7 +320,7 @@ def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
     # Como 'nlp' ahora se inicializa globalmente, esta comprobación no es estrictamente necesaria
     # pero puedes dejarla si quieres un doble check defensivo, aunque 'nlp' ya estará definido.
-    if nlp is None: # Puedes incluso quitar esta línea si prefieres, ya que nlp siempre debería estar cargado.
+    if nlp is None: 
         st.error("Error: Modelo de SpaCy no cargado. Contacta al soporte.")
         return []
     doc = nlp(texto)
@@ -479,7 +479,28 @@ def mejorar_script(script, tema, pre_generated_hook=None):
     return script_final
 
 def generar_hook(tema, reemplazos):
-    # ... (your existing generar_hook function remains unchanged) ...
+    """Genera hooks para una temática dada."""
+    hooks_tema = TEMATICAS.get(tema, {}).get("hooks", {})
+    hooks_genericos = {
+        "impacto": ["Lo que nadie te dijo sobre {tema}"],
+        "curiosidad": ["¿Por qué {tema} está revolucionando todo?"],
+        "pregunta": ["¿Estás listo para {tema}?"],
+    }
+    
+    hooks_disponibles = []
+    if hooks_tema:
+        for estrategia in hooks_tema.values():
+            hooks_disponibles.extend(estrategia)
+    
+    for hook_gen_list in hooks_genericos.values():
+        hooks_disponibles.extend(hook_gen_list)
+    
+    hook = random.choice(hooks_disponibles) if hooks_disponibles else "Descubre esto que cambiará tu perspectiva"
+    
+    for k, v in reemplazos.items():
+        hook = hook.replace(k, v)
+    
+    return hook
 
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
@@ -501,9 +522,6 @@ def main():
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
     
     download_nltk_data()
-
-    # --- ¡ATENCIÓN! Ya no necesitas 'global nlp' aquí ni la llamada a get_spacy_model()
-    # Ya se inicializó arriba en el ámbito global.
 
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
