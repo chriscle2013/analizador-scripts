@@ -164,7 +164,7 @@ def analizar_tematica(texto):
     confianza = min(100, puntaje * 20)  # Escala a porcentaje
     return (mejor_tema, confianza)
 
-ddef mejorar_script(script, tema):
+def mejorar_script(script, tema):
     """Mejora scripts para cualquier temática con técnicas virales"""
     # 1. Detección de estructura existente
     segmentos_temporales = re.findall(r"(\(\d+-\d+\ssegundos\).*)", script)
