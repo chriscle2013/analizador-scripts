@@ -7,13 +7,8 @@ from collections import defaultdict
 import pytz
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-import tweepy
 from textblob import TextBlob
-import config  # Archivo con credenciales (crear archivo config.py con tus API keys)
 import sys
-if sys.version_info >= (3, 13):
-    import warnings
-    warnings.warn("Python 3.13 puede tener problemas de compatibilidad. Recomendamos usar 3.10-3.11")
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
@@ -74,76 +69,88 @@ TEMATICAS = {
 }
 
 # ======================
-# 2. SISTEMA DE APRENDIZAJE AUTOMÁTICO
+# 2. SISTEMA DE APRENDIZAJE AUTOMÁTICO ROBUSTO
 # ======================
 class HookOptimizer:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(max_features=1000)
-        self.model = KMeans(n_clusters=5)
+        self.model = None
         self.hooks_db = []
         
     def entrenar(self, hooks_virales):
-        """Entrena con hooks exitosos históricos"""
-        if not hooks_virales:
-            raise ValueError("La lista de hooks no puede estar vacía")
+        """Versión mejorada con manejo de errores"""
+        if not hooks_virales or len(hooks_virales) < 2:
+            return False
+            
         try:
             X = self.vectorizer.fit_transform(hooks_virales)
-            n_clusters = min(3, len(hooks_virales)-1)
-            self.model = KMeans(n_clusters=n_clusters)
+            self.model = KMeans(n_clusters=min(3, len(hooks_virales)-1))
             self.model.fit(X)
             self.hooks_db = hooks_virales
+            return True
         except Exception as e:
-            st.error(f"Error entrenando: {e}")
-            self.model = None
+            st.error(f"Error en entrenamiento: {str(e)}")
+            return False
         
     def generar_hook_optimizado(self, texto, tema):
-        """Genera hook basado en patrones aprendidos"""
+        """Genera hooks contextuales"""
         try:
-            X_new = self.vectorizer.transform([texto])
-            cluster = self.model.predict(X_new)[0]
-            hooks_similares = [h for i,h in enumerate(self.hooks_db) 
-                             if self.model.labels_[i] == cluster]
+            # Priorizar hooks de la temática detectada
+            if tema in TEMATICAS:
+                hooks_tema = TEMATICAS[tema]["hooks"]
+                estrategia = random.choice(list(hooks_tema.keys()))
+                plantilla = random.choice(hooks_tema[estrategia])
+                hook = plantilla.replace("{robot}", "Ameca") \
+                               .replace("{tecnología}", "robótica") \
+                               .replace("{industria}", "la interacción humano-máquina")
+                return hook
             
-            return random.choice(hooks_similares) if hooks_similares else self.generar_hook_default(tema)
+            # Fallback para temas no definidos
+            return "Descubre cómo esta tecnología está cambiando el mundo"
         except:
-            return self.generar_hook_default(tema)
-    
-    def generar_hook_default(self, tema):
-        """Hook base cuando no hay datos suficientes"""
-        hooks = TEMATICAS.get(tema, {}).get("hooks", {}).values()
-        return random.choice(list(hooks)[0]) if hooks else "Descubre esto..."
+            return "Este contenido te sorprenderá"
 
 # ======================
-# 3. FUNCIONES PRINCIPALES
+# 3. FUNCIONES PRINCIPALES ACTUALIZADAS
 # ======================
 def analizar_tematica(texto):
-    """Detecta la temática principal del texto"""
+    """Detección mejorada de temática"""
     scores = defaultdict(int)
     for tema, data in TEMATICAS.items():
         for palabra in data["palabras_clave"]:
             if re.search(rf"\b{palabra}\b", texto.lower()):
                 scores[tema] += 1
-    return max(scores.items(), key=lambda x: x[1]) if scores else ("General", 1)
+    
+    if not scores:
+        return ("General", 0)
+    
+    mejor_tema, puntaje = max(scores.items(), key=lambda x: x[1])
+    confianza = min(100, puntaje * 20)  # Escala a porcentaje
+    return (mejor_tema, confianza)
 
-def adaptar_formato(contenido, formato, tema):
-    """Ajusta el contenido al formato de red social"""
-    formatos = {
-        "Reels": {"hashtags": 5, "máx_caracteres": 150},
-        "TikTok": {"hashtags": 3, "máx_caracteres": 100},
-        "YouTube": {"hashtags": 8, "máx_caracteres": 5000}
-    }
-    cfg = formatos.get(formato, formatos["Reels"])
+def mejorar_script(script, tema):
+    """Estructura el script con segmentos temporales"""
+    # Si ya tiene estructura, mantenerla
+    if "(0-3 segundos)" in script:
+        return script
+        
+    # Dividir en partes significativas
+    frases = [f.strip() for f in script.split('.') if f.strip()]
     
-    # Línea corregida (paréntesis balanceados)
-    hashtags = ' '.join(random.sample(
-        TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"]),
-        min(cfg["hashtags"], len(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"])))
-    ))
+    # Construir estructura temporal
+    partes = [
+        "(0-3 segundos) IMPACTO INICIAL",
+        frases[0] if frases else "Descubre esta innovación",
+        "\n(3-10 segundos) DESARROLLO",
+        ' '.join(frases[1:3]) if len(frases) > 2 else "Beneficios clave",
+        "\n(10-30 segundos) CIERRE",
+        ' '.join(frases[3:]) if len(frases) > 3 else "¿Qué opinas?"
+    ]
     
-    return f"{contenido[:cfg['máx_caracteres']]}\n\n{hashtags}"
+    return ' '.join(partes)
 
 # ======================
-# 4. INTERFAZ STREAMLIT
+# 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
 def main():
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
@@ -151,42 +158,46 @@ def main():
     # Inicializar sistemas
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
-    "Cómo ahorré $1000 en 1 mes con este método",
-    "El error que el 90% comete al hacer ejercicio",
-    "Comparativa: iPhone 15 vs Samsung S23 - ¿Cuál gana?",
-    "Esta técnica aumentó mis ventas un 300%",
-    "Lo que nadie te dice sobre invertir en cripto"
-])
+        "Cómo los robots como Ameca están cambiando la industria",
+        "La evolución de los humanoides en 2024",
+        "Ameca vs humanos: ¿Quién es más expresivo?",
+        "Esta tecnología robótica te sorprenderá"
+    ])
     
     col1, col2 = st.columns([1, 2])
     
     with col1:
         st.header("Configuración")
-        texto = st.text_area("Pega tu contenido:", height=150)
-        formato = st.selectbox("Formato:", ["Reels", "TikTok", "YouTube"])
+        texto = st.text_area("Pega tu script completo:", height=300,
+                           placeholder="Ej: (0-3 segundos) Video impactante...")
         
     with col2:
-        if st.button("🚀 Generar Contenido Viral"):
+        if st.button("🚀 Optimizar Contenido"):
             if texto:
-                # Análisis
-                tema, score = analizar_tematica(texto)
-                polaridad = TextBlob(texto).sentiment.polarity
-                
-                # Generación
-                hook = hook_ai.generar_hook_optimizado(texto, tema)
-                contenido = adaptar_formato(f"{hook}\n\n{texto}", formato, tema)
-                
-                # Resultados
-                st.subheader(f"🎯 Temática: {tema} (Confianza: {score*10}%)")
-                st.text_area("Contenido Optimizado:", contenido, height=300)
-                
-                # Métricas
-                with st.expander("📊 Análisis Avanzado"):
-                    st.metric("Sentimiento", "Positivo" if polaridad > 0 else "Negativo", 
-                             delta=f"{polaridad:.2f}")
-                    st.write(f"**Hashtags:** {contenido.splitlines()[-1]}")
+                with st.spinner("Analizando y mejorando..."):
+                    # Análisis avanzado
+                    tema, confianza = analizar_tematica(texto)
+                    blob = TextBlob(texto)
+                    polaridad = blob.sentiment.polarity
+                    
+                    # Generación de contenido
+                    hook = hook_ai.generar_hook_optimizado(texto, tema)
+                    script_mejorado = mejorar_script(texto, tema)
+                    hashtags = ' '.join(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"]))
+                    
+                    # Mostrar resultados
+                    st.subheader(f"🎯 Temática: {tema} (Confianza: {confianza}%)")
+                    st.text_area("Hook Viral Recomendado:", value=hook, height=100)
+                    st.text_area("Script Optimizado:", value=script_mejorado, height=300)
+                    
+                    # Métricas
+                    with st.expander("📊 Análisis Avanzado"):
+                        st.metric("Sentimiento", 
+                                "🔥 Positivo" if polaridad > 0.1 else "😐 Neutral" if polaridad > -0.1 else "⚠️ Negativo",
+                                delta=f"{polaridad:.2f}")
+                        st.write(f"🔍 Hashtags recomendados: {hashtags}")
             else:
-                st.warning("Por favor ingresa contenido para analizar")
+                st.warning("Por favor ingresa un script para analizar")
 
 if __name__ == "__main__":
     main()
