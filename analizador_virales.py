@@ -227,14 +227,17 @@ class HookOptimizer:
 # ======================
 # FUNCIONES AUXILIARES AVANZADAS
 # ======================
-# nlp se definirá en la función main y se pasará aquí si fuera necesario o se usará globalmente
-# Nota: La declaración de nlp se ha movido a la función main() con @st.cache_resource para Streamlit Cloud.
-# Asegúrate de que esta función 'extraer_entidades' esté definida ANTES de HookOptimizer si la vas a usar globalmente.
-# En este código, 'nlp' será una variable global accesible después de su carga en main().
+# Cargar el modelo de SpaCy directamente aquí.
+# Como lo instalamos via requirements.txt, estará disponible sin descarga adicional.
+@st.cache_resource # Decorador para que Streamlit cargue esto una sola vez y lo cachee
+def get_spacy_model():
+    return spacy.load("es_core_news_sm")
+
+nlp = get_spacy_model() # Carga el modelo al inicio de la app
+
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
-    if nlp is None: # nlp se carga en main(), es accesible globalmente
-        return []
+    # No necesitas verificar si nlp es None aquí porque ya se cargó o la app fallaría antes.
     doc = nlp(texto)
     entidades = []
     for ent in doc.ents:
@@ -384,29 +387,8 @@ def generar_hook(tema, reemplazos):
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
-# Declarar nlp a nivel global para que extraer_entidades pueda acceder a él.
-# Se inicializará con la función load_spacy_model dentro de main().
-nlp = None 
-
-@st.cache_resource # Decorador para que Streamlit cargue esto una sola vez
-def load_spacy_model():
-    global nlp # Indica que estamos modificando la variable global nlp
-    try:
-        # Intenta cargar el modelo si ya está descargado
-        nlp = spacy.load("es_core_news_sm")
-    except OSError:
-        # Si el modelo no está, lo descarga
-        st.info("Descargando modelo de SpaCy 'es_core_news_sm' por primera vez. Esto puede tardar un poco.")
-        spacy.cli.download("es_core_news_sm")
-        nlp = spacy.load("es_core_news_sm")
-    return nlp
-
 def main():
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
-    
-    # Carga el modelo de SpaCy al inicio de la app
-    # La variable global 'nlp' será asignada aquí
-    load_spacy_model() 
     
     # Inicializar HookOptimizer después de que nlp esté cargado si genera hooks basados en entidades
     hook_ai = HookOptimizer()
