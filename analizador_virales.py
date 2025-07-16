@@ -203,7 +203,7 @@ def main():
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.header("Configuración")
+        st.header("🎬 Script para Análizar")
         texto = st.text_area("Pega tu script completo:", height=300,
                            placeholder="Ej: (0-3 segundos) Video impactante...")
         
