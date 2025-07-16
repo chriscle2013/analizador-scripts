@@ -164,26 +164,119 @@ def analizar_tematica(texto):
     confianza = min(100, puntaje * 20)  # Escala a porcentaje
     return (mejor_tema, confianza)
 
-def mejorar_script(script, tema):
-    """Estructura el script con segmentos temporales"""
-    # Si ya tiene estructura, mantenerla
-    if "(0-3 segundos)" in script:
-        return script
-        
-    # Dividir en partes significativas
-    frases = [f.strip() for f in script.split('.') if f.strip()]
+ddef mejorar_script(script, tema):
+    """Mejora scripts para cualquier temática con técnicas virales"""
+    # 1. Detección de estructura existente
+    segmentos_temporales = re.findall(r"(\(\d+-\d+\ssegundos\).*)", script)
+    tiene_estructura = bool(segmentos_temporales)
     
-    # Construir estructura temporal
-    partes = [
-        "(0-3 segundos) IMPACTO INICIAL",
-        frases[0] if frases else "Descubre esta innovación",
-        "\n(3-10 segundos) DESARROLLO",
-        ' '.join(frases[1:3]) if len(frases) > 2 else "Beneficios clave",
-        "\n(10-30 segundos) CIERRE",
-        ' '.join(frases[3:]) if len(frases) > 3 else "¿Qué opinas?"
+    # 2. Diccionario de mejoras por temática (usando get() para default)
+    mejoras_por_tema = {
+        "Robótica": {
+            "hooks": ["{robot} ahora puede {acción}", "La revolución de {tecnología} en {año}"],
+            "transiciones": ["SFX: Sonido futurista", "Corte rápido a detalle tecnológico"],
+            "estadisticas": ["{porcentaje}% más rápido", "Capacidad de {función} mejorada"]
+        },
+        "Fútbol": {
+            "hooks": ["El {técnica} que cambió el partido", "{jugador} rompió el récord"],
+            "transiciones": ["SFX: Hinchada", "Slow motion clave"],
+            "estadisticas": ["{goles} goles en {minutos}", "Pase con {porcentaje}% precisión"]
+        },
+        # ... otros temas ...
+    }
+    
+    # 3. Sistema de reemplazos dinámicos
+    reemplazos = {
+        "{año}": str(datetime.now().year),
+        "{robot}": "Ameca" if tema == "Robótica" else "este dispositivo",
+        "{jugador}": random.choice(["Messi", "Cristiano", "Haaland"]) if tema == "Fútbol" else "el protagonista",
+        # ... otros reemplazos ...
+    }
+    
+    # 4. Plantillas multiuso (cuando no hay datos específicos)
+    plantillas_genericas = {
+        "hook_inicial": [
+            "¿Sabías que...? {dato_impactante}",
+            "🚨 ALERTA: {novedad} está cambiando las reglas"
+        ],
+        "mejora_visual": [
+            "💡 PRO TIP: Usa primeros planos cada 3 segundos",
+            "🎬 TÉCNICA: Cambio de ángulo tras cada afirmación"
+        ],
+        "llamado_accion": [
+            "👇 ¿Qué opinas? Comenta '{pregunta}'",
+            "🔥 No te pierdas más contenido como este → @tu_canal"
+        ]
+    }
+
+    # 5. Procesamiento del script
+    if tiene_estructura:
+        # Mejorar script estructurado
+        lineas = script.split('\n')
+        script_mejorado = []
+        
+        for linea in lineas:
+            script_mejorado.append(linea)
+            
+            # Añadir mejoras después de cada segmento temporal
+            if any(sec in linea for sec in ["(0-3 segundos)", "(3-10 segundos)", "(10-30 segundos)"]):
+                # Seleccionar mejora adecuada al tema
+                mejora = (
+                    random.choice(mejoras_por_tema.get(tema, {}).get("transiciones", [])) or
+                    random.choice(plantillas_genericas["mejora_visual"])
+                
+                # Aplicar reemplazos
+                for k, v in reemplazos.items():
+                    mejora = mejora.replace(k, v)
+                
+                script_mejorado.append(f"✨ MEJORA: {mejora}")
+                
+    else:
+        # Reestructurar script no organizado
+        frases = [f.strip() for f in re.split(r'[.!?]', script) if f.strip()]
+        
+        estructura_base = [
+            "(0-3 segundos) 🎯 GANCHO INICIAL",
+            frases[0] if frases else generar_hook(tema, reemplazos),
+            "(3-10 segundos) 💡 BENEFICIO CLAVE",
+            ' '.join(frases[1:3]) if len(frases) > 2 else "Descubre cómo...",
+            "(10-30 segundos) 🚀 DESARROLLO",
+            ' '.join(frases[3:5]) if len(frases) > 4 else "La innovación continúa...",
+            "(30-35 segundos) 📲 INTERACCIÓN",
+            random.choice(plantillas_genericas["llamado_accion"])
+        ]
+        
+        script_mejorado = estructura_base
+
+    # 6. Post-procesamiento (aplicar a todo el script)
+    script_final = '\n'.join(script_mejorado) if isinstance(script_mejorado, list) else script_mejorado
+    
+    # Añadir hashtags al final
+    hashtags = TEMATICAS.get(tema, {}).get("hashtags", ["#Viral", "#Trending"])
+    script_final += f"\n\n🔖 HASHTAGS: {' '.join(hashtags[:3])}"
+    
+    return script_final
+
+def generar_hook(tema, reemplazos):
+    """Genera hooks temáticos dinámicos"""
+    hooks_disponibles = [
+        TEMATICAS.get(tema, {}).get("hooks", {}),
+        {
+            "impacto": ["Lo que nadie te dijo sobre {tema}"],
+            "curiosidad": ["¿Por qué {tema} está revolucionando todo?"]
+        }
     ]
     
-    return ' '.join(partes)
+    # Seleccionar hook aleatorio aplicando reemplazos
+    hook = random.choice(
+        hooks_disponibles[0].get(random.choice(list(hooks_disponibles[0].keys())), []) +
+        hooks_disponibles[1].get(random.choice(list(hooks_disponibles[1].keys())), [])
+    )
+    
+    for k, v in reemplazos.items():
+        hook = hook.replace(k, v)
+    
+    return hook if hook else "Descubre esto que cambiará tu perspectiva"
 
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
