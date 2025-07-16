@@ -4,7 +4,7 @@ import random
 import numpy as np
 from datetime import datetime
 from collections import defaultdict
-import pytz # Aunque no se usa directamente en el código proporcionado, lo mantengo si lo usas en otro lado
+import pytz
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from textblob import TextBlob
@@ -101,7 +101,7 @@ TEMATICAS = {
             "inspiración": ["Cómo {persona_mindset} pasó de {situacion_mindset} a {logro_mindset}"],
             "acción": ["Si haces esto cada mañana, tu vida cambiará en {tiempo_mindset}"]
         },
-        "hashtags": ["#Mindset", "#CrecimientoPersonal", "#Motivacion", "#Productividad", "#DesarrolloPersonal"]
+        "hashtags": ["#Mindset", "#CrecimientoPersonal", "##Motivacion", "#Productividad", "#DesarrolloPersonal"]
     },
 
     # Finanzas
@@ -308,7 +308,6 @@ class HookOptimizer:
 def get_spacy_model():
     """Carga el modelo de SpaCy para español."""
     try:
-        # Aseguramos que solo se intente cargar, no descargar aquí.
         return spacy.load("es_core_news_sm")
     except OSError:
         st.error("Modelo 'es_core_news_sm' de SpaCy no encontrado. Asegúrate de que esté instalado en tu entorno.")
@@ -473,9 +472,12 @@ def mejorar_script(script, tema, pre_generated_hook=None):
                 else:
                     script_final_mejorado.append(mejora) 
                 
-        cta_already_present_in_original = any(re.search(r"(comenta|suscribe|siguenos|cta|subscribe)", l.lower()) for l in script.split('\n')[-7:])
+        # Lógica para detectar si ya hay una CTA en las últimas líneas del script original
+        cta_keywords = ["comenta", "suscribe", "síguenos", "síguenos", "link en bio", "haz clic aquí", "visita", "entra", "descarga", "registrate"]
+        script_last_lines = " ".join(script.split('\n')[-10:]).lower() # Revisar las últimas 10 líneas
+        cta_already_present = any(keyword in script_last_lines for keyword in cta_keywords)
 
-        if not cta_already_present_in_original:
+        if not cta_already_present:
             llamado_accion_gen = random.choice(plantillas_genericas["llamado_accion"])
             for k, v in reemplazos_genericos.items():
                 llamado_accion_gen = llamado_accion_gen.replace(k, v)
@@ -490,8 +492,18 @@ def mejorar_script(script, tema, pre_generated_hook=None):
         
         script_final_mejorado.append(f"(0-5 segundos) 🎯 GANCHO INICIAL: {gancho_a_usar}")
         script_final_mejorado.append("\n" + script.strip() + "\n") 
-        script_final_mejorado.append(f"(FINAL) 📲 LLAMADA A LA ACCIÓN: {llamado_accion_gen}")
-        script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
+        
+        # También aquí, si el script es "sin estructura" pero ya tiene CTA, no añadir
+        cta_keywords = ["comenta", "suscribe", "síguenos", "síguenos", "link en bio", "haz clic aquí", "visita", "entra", "descarga", "registrate"]
+        script_content_lower = script.lower()
+        cta_already_present_in_unstructured = any(keyword in script_content_lower for keyword in cta_keywords)
+
+        if not cta_already_present_in_unstructured:
+            script_final_mejorado.append(f"(FINAL) 📲 LLAMADA A LA ACCIÓN: {llamado_accion_gen}")
+            script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
+        else:
+            script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
+
 
     script_final = '\n'.join(script_final_mejorado)
     
@@ -529,11 +541,8 @@ def generar_hook(tema, reemplazos):
 # ======================
     
 def main():
-    # Asegúrate de que las descargas de NLTK y la carga del modelo SpaCy 
-    # se hagan *después* de st.set_page_config() y solo una vez.
-    download_nltk_data() # Ahora maneja mejor los errores y descargas
+    download_nltk_data()
 
-    # nlp se inicializa globalmente después de set_page_config
     if nlp is None:
         st.error("El modelo de SpaCy no pudo ser cargado. La funcionalidad de análisis de entidades será limitada.")
 
@@ -561,7 +570,6 @@ def main():
     with col1:
         st.header("🎬 Script para Analizar")
         
-        # El estado de sesión para script_content debe inicializarse *antes* de usarse
         if 'script_content' not in st.session_state:
             st.session_state.script_content = ""
 
@@ -571,7 +579,6 @@ def main():
                              key="script_input_area", 
                              value=st.session_state.script_content) 
         
-        # Botón de borrar (lo incluí de nuevo porque dices que antes funcionaba con él y puede ser útil)
         if st.button("🗑️ Borrar Script", key="clear_script_button"):
             st.session_state.script_content = "" 
             st.experimental_rerun() 
@@ -582,7 +589,6 @@ def main():
                 with st.spinner("Analizando y mejorando..."):
                     tema, confianza = analizar_tematica(texto)
                     
-                    # Asegúrate de que TextBlob y NRCLex también estén bien manejados
                     try:
                         blob = TextBlob(texto) 
                         polaridad = blob.sentiment.polarity
@@ -591,10 +597,12 @@ def main():
                         polaridad = 0.0 # Default a neutral
                         
                     try:
-                        emotions = NRCLex(texto).affect_frequencies
+                        emotions_raw = NRCLex(texto).affect_frequencies
+                        # Filtrar y ordenar emociones relevantes
+                        emociones_relevantes = {k: v for k, v in emotions_raw.items() if v > 0.05} 
                     except Exception as e:
                         st.warning(f"No se pudo realizar el análisis de emociones: {e}. Continuado sin este análisis.")
-                        emotions = {}
+                        emociones_relevantes = {}
 
                     generated_hook = hook_ai.generar_hook_optimizado(texto, tema) 
                     
@@ -614,15 +622,12 @@ def main():
                                   delta=f"{polaridad:.2f}")
 
                         st.subheader("Emociones Detectadas:")
-                        if emotions:
-                            emociones_relevantes = {k: v for k, v in emotions.items() if v > 0.05} 
-                            if emociones_relevantes:
-                                for emotion, freq in sorted(emociones_relevantes.items(), key=lambda item: item[1], reverse=True):
-                                    st.write(f"- **{emotion.capitalize()}**: {freq:.2%}")
-                            else:
-                                st.write("No se detectaron emociones fuertes en el script.")
+                        if emociones_relevantes:
+                            # Mostrar las emociones de forma más amigable
+                            for emotion, freq in sorted(emociones_relevantes.items(), key=lambda item: item[1], reverse=True):
+                                st.write(f"- **{emotion.capitalize()}**: {freq:.2%}")
                         else:
-                            st.write("Análisis de emociones no disponible debido a un error previo.")
+                            st.write("No se detectaron emociones fuertes en el script. (Esto es común en contenido informativo).")
 
 
                         st.write(f"🔍 Hashtags recomendados: {hashtags_display}")
