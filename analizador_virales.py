@@ -396,19 +396,11 @@ def generar_hook(tema, reemplazos):
 # @st.cache_resource para descargar los datos de NLTK/TextBlob una sola vez
 @st.cache_resource
 def download_nltk_data():
-    try:
-        # 'punkt' es necesario para la tokenización de oraciones
-        nltk.data.find('tokenizers/punkt')
-    except nltk.downloader.DownloadError:
-        nltk.download('punkt')
+    # Simplemente llamamos a download. NLTK es lo suficientemente inteligente para no descargar si ya existe.
+    # Eliminamos el try-except específico para DownloadError para evitar el AttributeError.
+    nltk.download('punkt')
+    nltk.download('averaged_perceptron_tagger')
     
-    try:
-        # 'averaged_perceptron_tagger' es necesario para la detección de partes del habla (POS tagging)
-        # que TextBlob puede usar internamente para la polaridad y otras funciones.
-        nltk.data.find('taggers/averaged_perceptron_tagger')
-    except nltk.downloader.DownloadError:
-        nltk.download('averaged_perceptron_tagger')
-
 def main():
     # 1. Configuración de la página (¡DEBE SER LO PRIMERO!)
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
@@ -442,7 +434,7 @@ def main():
                 with st.spinner("Analizando y mejorando..."):
                     # Análisis avanzado
                     tema, confianza = analizar_tematica(texto)
-                    blob = TextBlob(texto) # TextBlob ahora tendrá los corpus
+                    blob = TextBlob(texto) 
                     polaridad = blob.sentiment.polarity
                     
                     # Generación de contenido
@@ -465,7 +457,7 @@ def main():
                         emotions = NRCLex(texto).affect_frequencies
                         st.subheader("Emociones Detectadas:")
                         # Mostrar solo emociones con un valor significativo
-                        emociones_relevantes = {k: v for k, v in emotions.items() if v > 0.05} # Muestra si la frecuencia es > 5%
+                        emociones_relevantes = {k: v for k, v in emotions.items() if v > 0.05} 
                         if emociones_relevantes:
                             # Ordenar para mostrar las más relevantes primero
                             for emotion, freq in sorted(emociones_relevantes.items(), key=lambda item: item[1], reverse=True):
