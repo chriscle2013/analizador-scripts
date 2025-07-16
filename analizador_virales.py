@@ -112,7 +112,6 @@ print("Hashtags para Robótica Médica:", robotica_temas["Robótica Médica"]["h
         },
         "hashtags": ["#Tecnología", "#Innovación"]
     }
-}
 
 # ======================
 # 2. SISTEMA DE APRENDIZAJE AUTOMÁTICO ROBUSTO
