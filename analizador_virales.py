@@ -60,13 +60,6 @@ TEMATICAS = {
             "futuro": ["La próxima generación de **robots asistenciales** en {ámbito_salud}"]
         },
         "hashtags": ["#RobóticaMédica", "#CirugíaRobótica", "#Exoesqueletos", "#SaludDigital"]
-    }
-}
-
-# Ejemplo de cómo acceder a la información:
-print("Palabras clave para Robots Humanoides:", robotica_temas["Robots Humanoides"]["palabras_clave"])
-print("Un hook de aplicación para IA en Robótica:", robotica_temas["Inteligencia Artificial en Robótica"]["hooks"]["aplicación"])
-print("Hashtags para Robótica Médica:", robotica_temas["Robótica Médica"]["hashtags"])
     },
     
     "Fútbol": {
