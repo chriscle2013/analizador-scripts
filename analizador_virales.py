@@ -10,14 +10,14 @@ from sklearn.cluster import KMeans
 from textblob import TextBlob
 import sys
 import spacy
-from nrclex import NRCLex # Para el análisis emocional
-import nltk # ¡Nueva importación!
+from nrclex import NRCLex
+import nltk
 
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
 TEMATICAS = {
-    # ... (tu diccionario TEMATICAS completo aquí, no necesita cambios) ...
+    # Deportes
     "Fórmula 1": {
         "palabras_clave": ["f1", "gran premio", "piloto", "carrera", "escudería"],
         "hooks": {
@@ -39,13 +39,13 @@ TEMATICAS = {
 
     # Robótica
     "Robots Humanoides": {
-        "palabras_clave": ["humanoide", "bípedo", "androide", "atlas", "asimo"],
+        "palabras_clave": ["humanoide", "bípedo", "androide", "atlas", "asimo", "ameca", "engineered arts"],
         "hooks": {
             "técnica": ["Los desafíos de la **locomoción bípeda** en {nombre_robot}"],
             "aplicación": ["Cómo los humanoides están revolucionando la {industria}"],
             "avance": ["El nuevo sensor de {compañía} que permite a los humanoides {acción_mejorada}"]
         },
-        "hashtags": ["#Humanoides", "#RobotsHumanoides", "#Bípedos"]
+        "hashtags": ["#Humanoides", "#RobotsHumanoides", "#Bípedos", "#Ameca"]
     },
     "Inteligencia Artificial en Robótica": {
         "palabras_clave": ["ia", "aprendizaje automático", "machine learning", "visión artificial", "deep learning", "algoritmos"],
@@ -75,17 +75,17 @@ TEMATICAS = {
         "hashtags": ["#RobóticaMédica", "#CirugíaRobótica", "#Exoesqueletos", "#SaludDigital"]
     },
 
-    # Mascotas
-"Mascotas": {
-    "palabras_clave": ["perro", "gato", "hámster", "pájaro", "mascota", "animales"],
-    "hooks": {
-        "humor": ["Tu mascota también hace ESTO para volverte loco", "¿Listo para reírte? Las travesuras más épicas de {animal}"],
-        "consejo": ["El secreto para que tu {tipo_mascota} deje de {mal_hábito}"],
-        "emocional": ["La historia de {animal} que te derretirá el corazón"]
+    # Mascotas (¡NUEVA TEMÁTICA!)
+    "Mascotas": {
+        "palabras_clave": ["perro", "gato", "hámster", "pájaro", "mascota", "animales", "cachorros"],
+        "hooks": {
+            "humor": ["Tu mascota también hace ESTO para volverte loco", "¿Listo para reírte? Las travesuras más épicas de {animal}"],
+            "consejo": ["El secreto para que tu {tipo_mascota} deje de {mal_hábito}"],
+            "emocional": ["La historia de {animal} que te derretirá el corazón"]
+        },
+        "hashtags": ["#Mascotas", "#AnimalesGraciosos", "#MascotasVirales", "#PetsOfTikTok"]
     },
-    "hashtags": ["#Mascotas", "#AnimalesGraciosos", "#MascotasVirales"]
-},
-    
+
     # Mindset
     "Mindset": {
         "palabras_clave": ["éxito", "hábitos", "mentalidad", "crecimiento"],
@@ -108,7 +108,7 @@ TEMATICAS = {
         "hashtags": ["#Finanzas", "#Ahorro"]
     },
 
-    # Tecnología
+    # Tecnología (General)
     "Tecnología": {
         "palabras_clave": ["robot", "ia", "tecnología", "automatización"],
         "hooks": {
@@ -140,7 +140,7 @@ class HookOptimizer:
             n_clusters = min(3, len(hooks_virales) - 1)
             if n_clusters < 1: # Asegurar que al menos haya 1 cluster si hay hooks
                 n_clusters = 1
-            self.model = KMeans(n_clusters=n_clusters, random_state=42, n_init=10) # Añadir n_init
+            self.model = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
             self.model.fit(X)
             self.hooks_db = hooks_virales
             return True
@@ -152,45 +152,43 @@ class HookOptimizer:
         """Genera hooks contextuales usando detección de entidades del script."""
         try:
             # Obtener entidades relevantes del script
-            # Aquí puedes añadir más tipos de entidades si son relevantes para tus temas
-            personas = extraer_entidades(texto, "PER") # Personas
-            organizaciones = extraer_entidades(texto, "ORG") # Organizaciones/Equipos/Compañías
-            productos = extraer_entidades(texto, "PRODUCT") # Productos
-            lugares = extraer_entidades(texto, "LOC") # Lugares/Circuitos/Entornos
-            fechas = extraer_entidades(texto, "DATE") # Fechas/Años
-            conceptos_tecnicos = [] # Podrías añadir un procesamiento para esto con palabras clave
+            personas = extraer_entidades(texto, "PER")
+            organizaciones = extraer_entidades(texto, "ORG")
+            productos = extraer_entidades(texto, "PRODUCT")
+            lugares = extraer_entidades(texto, "LOC")
+            fechas = extraer_entidades(texto, "DATE")
 
             # Priorizar hooks de la temática detectada
             if tema in TEMATICAS:
                 hooks_tema = TEMATICAS[tema]["hooks"]
-                # Selecciona una estrategia aleatoria para mayor variedad
                 estrategia = random.choice(list(hooks_tema.keys()))
                 plantilla = random.choice(hooks_tema[estrategia])
 
-                # Intentar rellenar placeholders con entidades detectadas del script
                 hook = plantilla
-                if "{piloto}" in hook and personas:
-                    hook = hook.replace("{piloto}", random.choice(personas))
-                if "{equipo}" in hook and organizaciones:
-                    hook = hook.replace("{equipo}", random.choice(organizaciones))
-                if "{circuito}" in hook and lugares:
-                    hook = hook.replace("{circuito}", random.choice(lugares))
-                if "{robot}" in hook and productos: # Asumimos que los nombres de robots pueden ser productos
-                    hook = hook.replace("{robot}", random.choice(productos))
-                elif "{robot}" in hook and personas: # A veces los humanoides pueden ser PER
-                    hook = hook.replace("{robot}", random.choice(personas))
-                if "{compañía}" in hook and organizaciones:
-                    hook = hook.replace("{compañía}", random.choice(organizaciones))
-                if "{evento}" in hook and fechas: # Usar fechas para eventos
-                    hook = hook.replace("{evento}", random.choice(fechas))
-                if "{jugador}" in hook and personas:
-                    hook = hook.replace("{jugador}", random.choice(personas))
-                if "{producto}" in hook and productos:
-                    hook = hook.replace("{producto}", random.choice(productos))
-                if "{persona}" in hook and personas:
-                    hook = hook.replace("{persona}", random.choice(personas))
+                # Reemplazos para entidades
+                if "{piloto}" in hook and personas: hook = hook.replace("{piloto}", random.choice(personas))
+                if "{equipo}" in hook and organizaciones: hook = hook.replace("{equipo}", random.choice(organizaciones))
+                if "{circuito}" in hook and lugares: hook = hook.replace("{circuito}", random.choice(lugares))
+                if "{robot}" in hook and productos: hook = hook.replace("{robot}", random.choice(productos))
+                elif "{robot}" in hook and personas: hook = hook.replace("{robot}", random.choice(personas))
+                if "{compañía}" in hook and organizaciones: hook = hook.replace("{compañía}", random.choice(organizaciones))
+                if "{evento}" in hook and fechas: hook = hook.replace("{evento}", random.choice(fechas))
+                if "{jugador}" in hook and personas: hook = hook.replace("{jugador}", random.choice(personas))
+                if "{producto}" in hook and productos: hook = hook.replace("{producto}", random.choice(productos))
+                if "{persona}" in hook and personas: hook = hook.replace("{persona}", random.choice(personas))
+                
+                # Nuevos placeholders para Mascotas
+                if "{animal}" in hook and (personas or productos): # Un animal puede ser PER o un PRODUCT
+                    hook = hook.replace("{animal}", random.choice(personas if personas else productos))
+                elif "{animal}" in hook: # Fallback para animal
+                    hook = hook.replace("{animal}", random.choice(["perro", "gato", "loro"]))
+                if "{tipo_mascota}" in hook:
+                    hook = hook.replace("{tipo_mascota}", random.choice(["perro", "gato", "hámster"]))
+                if "{mal_hábito}" in hook:
+                    hook = hook.replace("{mal_hábito}", random.choice(["ladrar mucho", "arañar muebles", "morder cables"]))
 
-                # Fallback para placeholders específicos si no se encontraron entidades, o para otros genéricos
+
+                # Fallback para placeholders genéricos
                 hook = hook.replace("{robot}", "Ameca") \
                            .replace("{tecnología}", "robótica") \
                            .replace("{industria}", "la interacción humano-máquina") \
@@ -245,23 +243,20 @@ nlp = None
 
 @st.cache_resource # Decorador para que Streamlit cargue esto una sola vez y lo cachee
 def get_spacy_model():
-    # Esta función se encargará de cargar el modelo.
     return spacy.load("es_core_news_sm")
 
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
-    # Asegúrate de que nlp se haya cargado antes de llamar a esta función.
     if nlp is None: 
         st.error("Error: Modelo de SpaCy no cargado. Contacta al soporte.")
         return []
     doc = nlp(texto)
     entidades = []
     for ent in doc.ents:
-        # Filtrar por tipo de entidad si se especifica
         if tipo_entidad is None or ent.label_ == tipo_entidad:
             entidades.append(ent.text)
-    return list(set(entidades)) # Eliminar duplicados para evitar repeticiones
-    
+    return list(set(entidades))
+
 # ======================
 # 3. FUNCIONES PRINCIPALES ACTUALIZADAS
 # ======================
@@ -270,6 +265,7 @@ def analizar_tematica(texto):
     scores = defaultdict(int)
     for tema, data in TEMATICAS.items():
         for palabra in data["palabras_clave"]:
+            # Usamos re.search para encontrar la palabra completa, no solo substrings
             if re.search(rf"\b{palabra}\b", texto.lower()):
                 scores[tema] += 1
     
@@ -302,6 +298,11 @@ def mejorar_script(script, tema):
             "hooks": ["Cómo ahorré {cantidad} en {tiempo}", "El error que cuesta {porcentaje}% anual"],
             "transiciones": ["Gráfico animado", "Zoom a cifras clave"],
             "estadisticas": ["Rentabilidad del {porcentaje}%", "Ahorro de {tiempo} horas"]
+        },
+        "Mascotas": { # Mejoras específicas para mascotas
+            "hooks": ["Las travesuras de {animal} que te harán el día", "Tu {tipo_mascota} es más inteligente de lo que crees"],
+            "transiciones": ["SFX: Sonido de risas", "Corte a cara de sorpresa", "Música divertida"],
+            "estadisticas": ["{numero} segundos de pura diversión", "Destrucción en {cantidad} minutos"]
         }
     }
     
@@ -310,7 +311,11 @@ def mejorar_script(script, tema):
         "{año}": str(datetime.now().year),
         "{robot}": "Ameca" if tema == "Robótica" else "este dispositivo",
         "{jugador}": random.choice(["Messi", "Cristiano", "Haaland"]) if tema == "Fútbol" else "el protagonista",
-        "{tema}": tema
+        "{tema}": tema,
+        "{animal}": random.choice(["perro", "gato", "hámster"]) if tema == "Mascotas" else "animal",
+        "{tipo_mascota}": random.choice(["perro", "gato", "loro"]) if tema == "Mascotas" else "mascota",
+        "{numero}": str(random.randint(10, 60)),
+        "{cantidad}": str(random.randint(1, 10))
     }
     
     # 4. Plantillas multiuso
@@ -330,49 +335,43 @@ def mejorar_script(script, tema):
     }
 
     # 5. Procesamiento del script
+    script_final_mejorado = []
+
     if tiene_estructura:
         lineas = script.split('\n')
-        script_mejorado = []
         
         for linea in lineas:
-            script_mejorado.append(linea)
+            script_final_mejorado.append(linea)
             
-            if any(sec in linea for sec in ["(0-3 segundos)", "(3-10 segundos)", "(10-30 segundos)"]):
-                # Corrección: Selección de mejora con operador OR correctamente formateado
+            # Si es una línea de tiempo (ej. (0-3 segundos))
+            if re.search(r"^\(\d+-\d+\ssegundos\)", linea):
                 mejora_opciones = mejoras_por_tema.get(tema, {}).get("transiciones")
                 if mejora_opciones:
                     mejora = random.choice(mejora_opciones)
                 else:
                     mejora = random.choice(plantillas_genericas["mejora_visual"])
                 
-                # Aplicar reemplazos
                 for k, v in reemplazos.items():
                     mejora = mejora.replace(k, v)
                 
-                script_mejorado.append(f"✨ MEJORA: {mejora}")
+                script_final_mejorado.append(f"✨ MEJORA: {mejora}")
                 
-    else:
-        frases = [f.strip() for f in re.split(r'[.!?]', script) if f.strip()]
+    else: # Si el script no tiene una estructura temporal explícita
+        # Opción A: Simplemente añadir un gancho y un CTA al script original
+        hook_gen = generar_hook(tema, reemplazos)
+        llamado_accion_gen = random.choice(plantillas_genericas["llamado_accion"])
         
-        estructura_base = [
-            "(0-3 segundos) 🎯 GANCHO INICIAL",
-            frases[0] if frases else generar_hook(tema, reemplazos),
-            "(3-10 segundos) 💡 BENEFICIO CLAVE",
-            ' '.join(frases[1:3]) if len(frases) > 2 else "Descubre cómo...",
-            "(10-30 segundos) 🚀 DESARROLLO",
-            ' '.join(frases[3:5]) if len(frases) > 4 else "La innovación continúa...",
-            "(30-35 segundos) 📲 INTERACCIÓN",
-            random.choice(plantillas_genericas["llamado_accion"])
-        ]
-        
-        script_mejorado = estructura_base
+        script_final_mejorado.append(f"(0-5 segundos) 🎯 GANCHO INICIAL: {hook_gen}")
+        script_final_mejorado.append("\n" + script.strip() + "\n") # Añadir el script original completo
+        script_final_mejorado.append(f"(FINAL) 📲 LLAMADA A LA ACCIÓN: {llamado_accion_gen}")
+        script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
 
-    # 6. Post-procesamiento
-    script_final = '\n'.join(script_mejorado) if isinstance(script_mejorado, list) else script_mejorado
+
+    # 6. Post-procesamiento: Unir las líneas y añadir hashtags
+    script_final = '\n'.join(script_final_mejorado)
     
-    # Añadir hashtags al final
     hashtags = TEMATICAS.get(tema, {}).get("hashtags", ["#Viral", "#Trending"])
-    script_final += f"\n\n🔖 HASHTAGS: {' '.join(hashtags[:3])}"
+    script_final += f"\n\n🔖 HASHTAGS: {' '.join(hashtags[:3])}" # Limitar a 3 hashtags
     
     return script_final
 
@@ -384,15 +383,15 @@ def generar_hook(tema, reemplazos):
         "curiosidad": ["¿Por qué {tema} está revolucionando todo?"]
     }
     
-    # Seleccionar hooks disponibles
     hooks_disponibles = []
     if hooks_tema:
         for estrategia in hooks_tema.values():
             hooks_disponibles.extend(estrategia)
     
-    hooks_disponibles.extend(hooks_genericos.values())
+    # Asegúrate de que las plantillas genéricas también pasen por los reemplazos
+    for hook_gen in hooks_genericos.values():
+        hooks_disponibles.extend(hook_gen)
     
-    # Seleccionar y formatear hook
     hook = random.choice(hooks_disponibles) if hooks_disponibles else "Descubre esto que cambiará tu perspectiva"
     
     for k, v in reemplazos.items():
@@ -404,26 +403,19 @@ def generar_hook(tema, reemplazos):
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
 
-# @st.cache_resource para descargar los datos de NLTK/TextBlob una sola vez
 @st.cache_resource
 def download_nltk_data():
-    # Simplemente llamamos a download. NLTK es lo suficientemente inteligente para no descargar si ya existe.
-    # Eliminamos el try-except específico para DownloadError para evitar el AttributeError.
     nltk.download('punkt')
     nltk.download('averaged_perceptron_tagger')
     
 def main():
-    # 1. Configuración de la página (¡DEBE SER LO PRIMERO!)
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
     
-    # 2. Descargar los datos de NLTK/TextBlob (antes de usar TextBlob)
     download_nltk_data()
 
-    # 3. Carga del modelo SpaCy 
     global nlp 
     nlp = get_spacy_model() 
     
-    # 4. Inicializar sistemas
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
         "Cómo los robots como Ameca están cambiando la industria",
@@ -443,40 +435,33 @@ def main():
         if st.button("🚀 Optimizar Contenido"):
             if texto:
                 with st.spinner("Analizando y mejorando..."):
-                    # Análisis avanzado
                     tema, confianza = analizar_tematica(texto)
                     blob = TextBlob(texto) 
                     polaridad = blob.sentiment.polarity
                     
-                    # Generación de contenido
                     hook = hook_ai.generar_hook_optimizado(texto, tema)
                     script_mejorado = mejorar_script(texto, tema)
-                    hashtags = ' '.join(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"]))
-                    
-                    # Mostrar resultados
+                    hashtags_output = ' '.join(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"])) # Aquí cambié el nombre de la variable para que no haya conflicto
+
                     st.subheader(f"🎯 Temática: {tema} (Confianza: {confianza}%)")
                     st.text_area("Hook Viral Recomendado:", value=hook, height=100)
                     st.text_area("Script Optimizado:", value=script_mejorado, height=300)
                     
-                    # Métricas
                     with st.expander("📊 Análisis Avanzado"):
                         st.metric("Sentimiento General",
                                   "🔥 Positivo" if polaridad > 0.1 else "😐 Neutral" if polaridad > -0.1 else "⚠️ Negativo",
                                   delta=f"{polaridad:.2f}")
 
-                        # Análisis de emociones con NRCLex
                         emotions = NRCLex(texto).affect_frequencies
                         st.subheader("Emociones Detectadas:")
-                        # Mostrar solo emociones con un valor significativo
                         emociones_relevantes = {k: v for k, v in emotions.items() if v > 0.05} 
                         if emociones_relevantes:
-                            # Ordenar para mostrar las más relevantes primero
                             for emotion, freq in sorted(emociones_relevantes.items(), key=lambda item: item[1], reverse=True):
                                 st.write(f"- **{emotion.capitalize()}**: {freq:.2%}")
                         else:
                             st.write("No se detectaron emociones fuertes en el script.")
 
-                        st.write(f"🔍 Hashtags recomendados: {hashtags}")
+                        st.write(f"🔍 Hashtags recomendados: {hashtags_output}") # Usar la variable actualizada
             else:
                 st.warning("Por favor ingresa un script para analizar")
 
