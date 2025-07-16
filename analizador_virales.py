@@ -4,7 +4,7 @@ import random
 import numpy as np
 from datetime import datetime
 from collections import defaultdict
-import pytz
+import pytz # Aunque no se usa directamente en el código proporcionado, lo mantengo si lo usas en otro lado
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from textblob import TextBlob
@@ -309,18 +309,14 @@ def get_spacy_model():
     """Carga el modelo de SpaCy para español."""
     try:
         # Aseguramos que solo se intente cargar, no descargar aquí.
-        # Las descargas se manejan en download_nltk_data o como parte de la configuración del entorno.
         return spacy.load("es_core_news_sm")
     except OSError:
         st.error("Modelo 'es_core_news_sm' de SpaCy no encontrado. Asegúrate de que esté instalado en tu entorno.")
-        # No intentamos descargar aquí para evitar problemas de permisos o bloqueos en Streamlit Cloud.
-        # La descarga debería hacerse al construir la imagen de Docker o en un script de pre-ejecución.
         return None # Devuelve None si no se puede cargar el modelo
 
 @st.cache_resource
 def download_nltk_data():
     """Descarga los recursos de NLTK necesarios."""
-    nltk_data_path = nltk.data.find('corpora') # Directorio por defecto para descargas de NLTK
     
     # Lista de paquetes NLTK requeridos
     required_nltk_packages = ['punkt', 'averaged_perceptron_tagger']
@@ -329,19 +325,20 @@ def download_nltk_data():
         try:
             # Intenta encontrar el paquete. Si no lo encuentra, lanza una excepción.
             nltk.data.find(f'tokenizers/{package}' if 'punkt' in package else f'taggers/{package}')
-        except nltk.downloader.DownloadError:
+        except LookupError: # Usar LookupError que es más específico para recursos no encontrados de NLTK
             st.warning(f"Descargando paquete NLTK: {package}...")
             try:
                 nltk.download(package, quiet=True) # quiet=True para no mostrar barra de progreso
                 st.success(f"Paquete NLTK '{package}' descargado con éxito.")
             except Exception as e:
                 st.error(f"Error al descargar NLTK '{package}': {str(e)}. Por favor, verifica tu conexión o permisos.")
-        except Exception as e:
+        except Exception as e: # Captura cualquier otra excepción inesperada
             st.error(f"Error inesperado al verificar NLTK '{package}': {str(e)}")
             
 # Inicializa 'nlp' una única vez al cargar el script.
 # La llamada a st.set_page_config ya ocurrió.
 nlp = get_spacy_model()
+
 
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
@@ -420,7 +417,7 @@ def mejorar_script(script, tema, pre_generated_hook=None):
             "transiciones": ["SFX: Chirrido de neumáticos", "Cámara lenta del trompo", "Toma en cabina del piloto reaccionando", "Corte rápido entre diferentes ángulos de la acción"],
             "logro": ["Gráfico de tiempos de vuelta subiendo a P1", "Celebración en el pit wall", "Cámara lenta del cruce de meta"], 
             "velocidad": ["Efecto de velocidad en el coche", "Onboard a toda velocidad"], 
-            "pole": ["Tabla de tiempos resaltando P1", "Onboard de vuelta clasificatoria", "Toma en cabina del piloto reaccionando"], 
+            "pole": ["Tabla de tiempos resaltando P1", "Onboard de vuelta clasificatoria", "Toma en cabina del piloto reaccionar"], 
         }
     }
     
