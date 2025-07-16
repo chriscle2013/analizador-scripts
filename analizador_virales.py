@@ -25,7 +25,7 @@ TEMATICAS = {
             "polémica": ["La decisión de la FIA que cambió el {evento_f1_generico}"],
             "récord": ["{piloto_f1} rompió el récord de {marca} en {año}", "La {marca} que le dio la {logro_f1} a {piloto_f1}"], # Añadido
             "inesperado": ["¡El {evento_f1_inesperado} más caótico en la historia de {circuito_f1}!", "Los {numero} trompos más salvajes de {evento_f1_generico}"],
-            "logro": ["La {logro_f1} de {piloto_f1} que te dejará sin aliento en {circuito_f1}", "Así fue la {logro_f1} de {piloto_f1} en la última vuelta"] # Añadido
+            "logro": ["La {logro_f1} de {piloto_f1} que te dejará sin aliento en {circuito_f1}", "Así fue la {logro_f1} de {piloto_f1} en la última vuelta", "La {marca} que le dio la {logro_f1} a {piloto_f1}"] # Añadido
         },
         "hashtags": ["#F1", "#Formula1", "#F1News", "#SilverstoneF1", "#MotorSport", "#F1Pole"] 
     },
@@ -46,8 +46,8 @@ TEMATICAS = {
             "técnica": ["Los desafíos de la **locomoción bípeda** en {nombre_robot}"],
             "aplicación": ["Cómo los humanoides están revolucionando la {industria_robotica}"],
             "avance": ["El nuevo sensor de {compañia_robotica} que permite a los humanoides {accion_mejorada_robotica}"],
-            "impacto": ["Así es {nombre_robot}, el robot humanoide que cambiará el mundo"], # Añadido
-            "demo": ["Mira a {nombre_robot} haciendo ESTO en el laboratorio de {compañia_robotica}"] # Añadido
+            "impacto": ["Así es {nombre_robot}, el robot humanoide que cambiará el mundo"], 
+            "demo": ["Mira a {nombre_robot} haciendo ESTO en el laboratorio de {compañia_robotica}", "Las increíbles capacidades de {nombre_robot} que te dejarán sin palabras"] 
         },
         "hashtags": ["#Humanoides", "#RobotsHumanoides", "#Bípedos", "#Ameca", "#Optimus", "#TeslaBot", "#FuturoAI", "#Robótica"]
     },
@@ -181,7 +181,7 @@ class HookOptimizer:
                     if re.search(r'\b(trompos|spin|accidente|caos|inesperado)\b', texto.lower()) and "inesperado" in hooks_tema:
                         estrategia = "inesperado"
                     elif re.search(r'\b(pole|victoria|ganar|récord|campeón|última vuelta)\b', texto.lower()) and ("logro" in hooks_tema or "récord" in hooks_tema):
-                        estrategia = random.choice(["logro", "récord"]) # Priorizar logros
+                        estrategia = random.choice(["logro", "récord"]) 
                     elif re.search(r'\b(polémica|fia|sanción|protesta)\b', texto.lower()) and "polémica" in hooks_tema:
                         estrategia = "polémica"
                 elif tema == "Mascotas":
@@ -224,21 +224,34 @@ class HookOptimizer:
                     if "{mal_habito_mascota}" in hook:
                         hook = hook.replace("{mal_habito_mascota}", random.choice(["ladrar mucho", "arañar muebles", "morder cables", "comerse los zapatos"]))
 
+                # Robotics (Optimus)
+                if tema == "Robots Humanoides":
+                    robot_name = random.choice(productos) if productos else "Optimus"
+                    company_name = random.choice(organizaciones) if organizaciones else "Tesla"
+                    
+                    # CORRECCIÓN: Evitar "en el laboratorio de Optimus" si Optimus es el robot
+                    if "{compañia_robotica}" in hook:
+                        if company_name.lower() == robot_name.lower(): # Si el nombre del robot y la compañía son iguales o muy similares
+                            hook = hook.replace("{compañia_robotica}", "su creador" if "tesla" not in texto.lower() else "Tesla") # Usar "su creador" o "Tesla"
+                        else:
+                            hook = hook.replace("{compañia_robotica}", company_name)
+                    if "{nombre_robot}" in hook: hook = hook.replace("{nombre_robot}", robot_name)
+                    
+                    if "{industria_robotica}" in hook: hook = hook.replace("{industria_robotica}", "la manufactura")
+                    if "{accion_mejorada_robotica}" in hook: hook = hook.replace("{accion_mejorada_robotica}", "navegar con destreza")
+
+
                 # REEMPLAZOS GENÉRICOS (for placeholders that can appear in multiple themes)
-                if "{año}" in hook: hook = hook.replace("{año}", str(datetime.now().year + 1)) # Año futuro para F1 2025
+                if "{año}" in hook: hook = hook.replace("{año}", str(datetime.now().year + 1)) 
                 if "{marca}" in hook: hook = hook.replace("{marca}", "velocidad récord")
                 if "{incidente}" in hook: hook = hook.replace("{incidente}", "incidente polémico")
                 if "{dato_impactante}" in hook: hook = hook.replace("{dato_impactante}", "un dato sorprendente")
                 if "{novedad}" in hook: hook = hook.replace("{novedad}", "la última novedad")
                 if "{pregunta}" in hook: hook = hook.replace("{pregunta}", "¿Estás de acuerdo?")
                 if "{tema}" in hook: hook = hook.replace("{tema}", tema)
-                if "{sistema}" in hook: hook = hook.replace("{sistema}", "sistema secreto") # Fallback for {system}
+                if "{sistema}" in hook: hook = hook.replace("{sistema}", "sistema secreto") 
 
-                # Robotics
-                if "{nombre_robot}" in hook: hook = hook.replace("{nombre_robot}", random.choice(productos) if productos else "Optimus")
-                if "{industria_robotica}" in hook: hook = hook.replace("{industria_robotica}", "la manufactura")
-                if "{compañia_robotica}" in hook: hook = hook.replace("{compañia_robotica}", random.choice(organizaciones) if organizaciones else "Tesla")
-                if "{accion_mejorada_robotica}" in hook: hook = hook.replace("{accion_mejorada_robotica}", "navegar con destreza")
+                # General Robotics / AI
                 if "{robot_ia}" in hook: hook = hook.replace("{robot_ia}", random.choice(productos) if productos else "un robot de IA")
                 if "{objeto_ia}" in hook: hook = hook.replace("{objeto_ia}", "objetos complejos")
                 if "{entorno_complejo}" in hook: hook = hook.replace("{entorno_complejo}", "ciudades inteligentes")
@@ -364,32 +377,32 @@ def mejorar_script(script, tema, pre_generated_hook=None):
     
     mejoras_por_tema = {
         "Robótica": { # General para robótica
-            "transiciones": ["SFX: Sonido futurista activándose", "Corte rápido a detalle de mecanismo", "✨ MEJORA: Toma de Ameca expresando una emoción sutil"],
-            "logro": ["✨ MEJORA: Animación de engranajes o chips", "✨ MEJORA: Texto dinámico: '¡Ingeniería Maestra!'"],
-            "impacto": ["✨ MEJORA: Zoom dramático en la cara del robot", "✨ MEJORA: Gráfico de datos en movimiento"]
+            "transiciones": ["SFX: Sonido futurista activándose", "Corte rápido a detalle de mecanismo", "Toma de Ameca expresando una emoción sutil"],
+            "logro": ["Animación de engranajes o chips", "Texto dinámico: '¡Ingeniería Maestra!'"],
+            "impacto": ["Zoom dramático en la cara del robot", "Gráfico de datos en movimiento"]
         },
         "Robots Humanoides": { # Específico para humanoides como Optimus
-            "transiciones": ["SFX: Sonido de servos suaves", "Corte a detalle de articulación", "✨ MEJORA: Toma que resalta la fluidez del movimiento", "✨ MEJORA: Close-up a los ojos de Optimus"],
-            "logro": ["✨ MEJORA: Animación de engranajes o chips", "✨ MEJORA: Texto dinámico: '¡Ingeniería Maestra!'"],
-            "impacto": ["✨ MEJORA: Zoom dramático en la cara del robot", "✨ MEJORA: Gráfico de datos en movimiento", "✨ MEJORA: Montaje de aplicaciones diversas del robot"]
+            "transiciones": ["SFX: Sonido de servos suaves", "Corte a detalle de articulación", "Toma que resalta la fluidez del movimiento", "Close-up a los ojos de Optimus"],
+            "logro": ["Animación de engranajes o chips", "Texto dinámico: '¡Ingeniería Maestra!'"],
+            "impacto": ["Zoom dramático en la cara del robot", "Gráfico de datos en movimiento", "Montaje de aplicaciones diversas del robot"]
         },
         "Fútbol": {
-            "transiciones": ["SFX: Hinchada rugiendo", "Slow motion de jugada clave", "✨ MEJORA: Gráfico animado de estadística de jugador"],
-            "logro": ["✨ MEJORA: Repetición en cámara lenta del gol", "✨ MEJORA: Gráfico de 'heatmap' de la cancha"]
+            "transiciones": ["SFX: Hinchada rugiendo", "Slow motion de jugada clave", "Gráfico animado de estadística de jugador"],
+            "logro": ["Repetición en cámara lenta del gol", "Gráfico de 'heatmap' de la cancha"]
         },
         "Finanzas": {
             "transiciones": ["Gráfico animado de crecimiento/caída", "Zoom a cifras clave", "SFX: Sonido de calculadora o transacción"],
-            "logro": ["✨ MEJORA: Gráfico de barra de crecimiento", "✨ MEJORA: Montaje de billetes o monedas"]
+            "logro": ["Gráfico de barra de crecimiento", "Montaje de billetes o monedas"]
         },
         "Mascotas": {
-            "transiciones": ["SFX: Sonido de risas o asombro", "Corte a cara de sorpresa del dueño", "Música divertida subiendo", "✨ MEJORA: Primer plano a la expresión traviesa de la mascota"],
-            "consejo": ["✨ MEJORA: Lista de consejos en pantalla", "✨ MEJORA: Demostración visual de la solución"]
+            "transiciones": ["SFX: Sonido de risas o asombro", "Corte a cara de sorpresa del dueño", "Música divertida subiendo", "Primer plano a la expresión traviesa de la mascota"],
+            "consejo": ["Lista de consejos en pantalla", "Demostración visual de la solución"]
         },
         "Fórmula 1": {
-            "transiciones": ["SFX: Chirrido de neumáticos", "Cámara lenta del trompo", "✨ MEJORA: Toma en cabina del piloto reaccionando", "Corte rápido entre diferentes ángulos de la acción"],
-            "logro": ["✨ MEJORA: Gráfico de tiempos de vuelta subiendo a P1", "✨ MEJORA: Celebración en el pit wall", "✨ MEJORA: Cámara lenta del cruce de meta"], # Añadido
-            "velocidad": ["✨ MEJORA: Efecto de velocidad en el coche", "✨ MEJORA: Onboard a toda velocidad"], # Añadido
-            "pole": ["✨ MEJORA: Tabla de tiempos resaltando P1", "✨ MEJORA: Onboard de vuelta clasificatoria"], # Añadido
+            "transiciones": ["SFX: Chirrido de neumáticos", "Cámara lenta del trompo", "Toma en cabina del piloto reaccionando", "Corte rápido entre diferentes ángulos de la acción"],
+            "logro": ["Gráfico de tiempos de vuelta subiendo a P1", "Celebración en el pit wall", "Cámara lenta del cruce de meta"], 
+            "velocidad": ["Efecto de velocidad en el coche", "Onboard a toda velocidad"], 
+            "pole": ["Tabla de tiempos resaltando P1", "Onboard de vuelta clasificatoria", "Toma en cabina del piloto reaccionando"], # Añadido 'Toma en cabina...'
         }
     }
     
@@ -429,23 +442,26 @@ def mejorar_script(script, tema, pre_generated_hook=None):
                     if re.search(r'\b(pole|q3|última vuelta|verstappen)\b', linea.lower()):
                         mejora_opciones = mejoras_por_tema["Fórmula 1"].get("pole", mejoras_por_tema["Fórmula 1"].get("logro"))
                     elif re.search(r'\b(trompos|spin)\b', linea.lower()):
-                        mejora_opciones = mejoras_por_tema["Fórmula 1"].get("transiciones") # Las de trompo ya están aquí
-                elif tema == "Robots Humanoides" or tema == "Robótica": # Para Optimus
-                    if re.search(r'\b(precisión|eficiencia|movilidad|diseñado)\b', linea.lower()):
+                        mejora_opciones = mejoras_por_tema["Fórmula 1"].get("transiciones") 
+                elif tema == "Robots Humanoides" or tema == "Robótica": 
+                    if re.search(r'\b(precisión|eficiencia|movilidad|diseñado|optimus)\b', linea.lower()):
                          mejora_opciones = mejoras_por_tema["Robots Humanoides"].get("impacto", mejoras_por_tema["Robots Humanoides"].get("transiciones"))
 
 
                 if mejora_opciones:
                     mejora = random.choice(mejora_opciones)
-                else: # Fallback a mejoras visuales genéricas si no hay específicas
+                else: 
                     mejora = random.choice(plantillas_genericas["mejora_visual"])
                 
                 # Aplicar reemplazos genéricos a la mejora
                 for k, v in reemplazos_genericos.items():
                     mejora = mejora.replace(k, v)
                 
-                # Añadir la mejora
-                script_final_mejorado.append(f"✨ MEJORA: {mejora}")
+                # CORRECCIÓN: Asegurarse de que "✨ MEJORA: " no se duplique
+                if not mejora.strip().startswith("✨ MEJORA:"):
+                    script_final_mejorado.append(f"✨ MEJORA: {mejora}")
+                else:
+                    script_final_mejorado.append(mejora) # Si ya tiene el prefijo, lo añade directamente
                 
         # Al final del script con estructura, añadir un CTA si no se incluyó ya
         cta_already_present_in_original = any(re.search(r"(comenta|suscribe|siguenos|cta|subscribe)", l.lower()) for l in script.split('\n')[-7:])
@@ -539,9 +555,11 @@ def main():
         "¡Los 5 trompos más locos de la F1 en Silverstone!",
         "La verdad sobre el rendimiento de Ferrari en F1",
         "El error de Hamilton que le costó la carrera",
-        "Max Verstappen se llevó la pole en el último segundo en Silverstone", # Añadido
-        "El gato más destructor de cajas del mundo", # Añadido
-        "Optimus de Tesla: el robot que revoluciona las fábricas" # Añadido
+        "Max Verstappen se llevó la pole en el último segundo en Silverstone", 
+        "El gato más destructor de cajas del mundo", 
+        "Optimus de Tesla: el robot que revoluciona las fábricas",
+        "Mira a Optimus haciendo esto en el laboratorio de Tesla", # Agregado para el entrenamiento
+        "La precisión de Optimus en tareas delicadas" # Agregado para el entrenamiento
     ])
     
     col1, col2 = st.columns([1, 2])
