@@ -566,8 +566,21 @@ def main():
     
     with col1:
         st.header("🎬 Script para Analizar")
-        texto = st.text_area("Pega tu script completo:", height=300,
-                             placeholder="Ej: (0-3 segundos) Video impactante...")
+
+        # Usa un key para el text_area y un estado para su valor
+    if 'script_content' not in st.session_state:
+        st.session_state.script_content = ""
+        
+        texto = st.text_area("Pega tu script completo:", 
+                         height=300,
+                         placeholder="Ej: (0-3 segundos) Video impactante...",
+                         key="script_input_area", # Usa un key único
+                         value=st.session_state.script_content)
+
+    # Botón para borrar el contenido
+    if st.button("🗑️ Borrar Script", key="clear_script_button"):
+        st.session_state.script_content = "" # Resetea el valor en el estado de sesión
+        st.experimental_rerun() # Fuerza una recarga para que el text_area se vacíe
         
     with col2:
         if st.button("🚀 Optimizar Contenido"):
