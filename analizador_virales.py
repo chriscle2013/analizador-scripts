@@ -11,12 +11,13 @@ from textblob import TextBlob
 import sys
 import spacy
 from nrclex import NRCLex # Para el análisis emocional
+import nltk # ¡Nueva importación!
 
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
 TEMATICAS = {
-    # Deportes
+    # ... (tu diccionario TEMATICAS completo aquí, no necesita cambios) ...
     "Fórmula 1": {
         "palabras_clave": ["f1", "gran premio", "piloto", "carrera", "escudería"],
         "hooks": {
@@ -234,15 +235,12 @@ nlp = None
 @st.cache_resource # Decorador para que Streamlit cargue esto una sola vez y lo cachee
 def get_spacy_model():
     # Esta función se encargará de cargar el modelo.
-    # Como ya lo estamos instalando con requirements.txt, solo necesitamos cargarlo.
     return spacy.load("es_core_news_sm")
 
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
     # Asegúrate de que nlp se haya cargado antes de llamar a esta función.
-    # En la nueva estructura, nlp se cargará al principio de main().
-    if nlp is None: # Esto ya no debería ser necesario si main() lo carga primero
-        # En un escenario de depuración, podrías querer un fallback o error más claro
+    if nlp is None: 
         st.error("Error: Modelo de SpaCy no cargado. Contacta al soporte.")
         return []
     doc = nlp(texto)
@@ -394,15 +392,35 @@ def generar_hook(tema, reemplazos):
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
+
+# @st.cache_resource para descargar los datos de NLTK/TextBlob una sola vez
+@st.cache_resource
+def download_nltk_data():
+    try:
+        # 'punkt' es necesario para la tokenización de oraciones
+        nltk.data.find('tokenizers/punkt')
+    except nltk.downloader.DownloadError:
+        nltk.download('punkt')
+    
+    try:
+        # 'averaged_perceptron_tagger' es necesario para la detección de partes del habla (POS tagging)
+        # que TextBlob puede usar internamente para la polaridad y otras funciones.
+        nltk.data.find('taggers/averaged_perceptron_tagger')
+    except nltk.downloader.DownloadError:
+        nltk.download('averaged_perceptron_tagger')
+
 def main():
     # 1. Configuración de la página (¡DEBE SER LO PRIMERO!)
     st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
     
-    # 2. Carga del modelo SpaCy (ahora con la variable global)
-    global nlp # Importante para modificar la variable global nlp
-    nlp = get_spacy_model() # Carga el modelo de SpaCy después de set_page_config
+    # 2. Descargar los datos de NLTK/TextBlob (antes de usar TextBlob)
+    download_nltk_data()
+
+    # 3. Carga del modelo SpaCy 
+    global nlp 
+    nlp = get_spacy_model() 
     
-    # 3. Inicializar sistemas
+    # 4. Inicializar sistemas
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
         "Cómo los robots como Ameca están cambiando la industria",
@@ -424,7 +442,7 @@ def main():
                 with st.spinner("Analizando y mejorando..."):
                     # Análisis avanzado
                     tema, confianza = analizar_tematica(texto)
-                    blob = TextBlob(texto)
+                    blob = TextBlob(texto) # TextBlob ahora tendrá los corpus
                     polaridad = blob.sentiment.polarity
                     
                     # Generación de contenido
