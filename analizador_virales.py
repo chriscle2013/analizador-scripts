@@ -170,7 +170,7 @@ def mejorar_script(script, tema):
     segmentos_temporales = re.findall(r"(\(\d+-\d+\ssegundos\).*)", script)
     tiene_estructura = bool(segmentos_temporales)
     
-    # 2. Diccionario de mejoras por temática (usando get() para default)
+    # 2. Diccionario de mejoras por temática
     mejoras_por_tema = {
         "Robótica": {
             "hooks": ["{robot} ahora puede {acción}", "La revolución de {tecnología} en {año}"],
@@ -182,7 +182,11 @@ def mejorar_script(script, tema):
             "transiciones": ["SFX: Hinchada", "Slow motion clave"],
             "estadisticas": ["{goles} goles en {minutos}", "Pase con {porcentaje}% precisión"]
         },
-        # ... otros temas ...
+        "Finanzas": {
+            "hooks": ["Cómo ahorré {cantidad} en {tiempo}", "El error que cuesta {porcentaje}% anual"],
+            "transiciones": ["Gráfico animado", "Zoom a cifras clave"],
+            "estadisticas": ["Rentabilidad del {porcentaje}%", "Ahorro de {tiempo} horas"]
+        }
     }
     
     # 3. Sistema de reemplazos dinámicos
@@ -190,10 +194,10 @@ def mejorar_script(script, tema):
         "{año}": str(datetime.now().year),
         "{robot}": "Ameca" if tema == "Robótica" else "este dispositivo",
         "{jugador}": random.choice(["Messi", "Cristiano", "Haaland"]) if tema == "Fútbol" else "el protagonista",
-        # ... otros reemplazos ...
+        "{tema}": tema
     }
     
-    # 4. Plantillas multiuso (cuando no hay datos específicos)
+    # 4. Plantillas multiuso
     plantillas_genericas = {
         "hook_inicial": [
             "¿Sabías que...? {dato_impactante}",
@@ -211,19 +215,15 @@ def mejorar_script(script, tema):
 
     # 5. Procesamiento del script
     if tiene_estructura:
-        # Mejorar script estructurado
         lineas = script.split('\n')
         script_mejorado = []
         
         for linea in lineas:
             script_mejorado.append(linea)
             
-            # Añadir mejoras después de cada segmento temporal
             if any(sec in linea for sec in ["(0-3 segundos)", "(3-10 segundos)", "(10-30 segundos)"]):
-                # Seleccionar mejora adecuada al tema
-                mejora = (
-                    random.choice(mejoras_por_tema.get(tema, {}).get("transiciones", [])) or
-                    random.choice(plantillas_genericas["mejora_visual"])
+                # Corrección: Selección de mejora con operador OR correctamente formateado
+                mejora = (random.choice(mejoras_por_tema.get(tema, {}).get("transiciones", [""])) or random.choice(plantillas_genericas["mejora_visual"])
                 
                 # Aplicar reemplazos
                 for k, v in reemplazos.items():
@@ -232,7 +232,6 @@ def mejorar_script(script, tema):
                 script_mejorado.append(f"✨ MEJORA: {mejora}")
                 
     else:
-        # Reestructurar script no organizado
         frases = [f.strip() for f in re.split(r'[.!?]', script) if f.strip()]
         
         estructura_base = [
@@ -248,7 +247,7 @@ def mejorar_script(script, tema):
         
         script_mejorado = estructura_base
 
-    # 6. Post-procesamiento (aplicar a todo el script)
+    # 6. Post-procesamiento
     script_final = '\n'.join(script_mejorado) if isinstance(script_mejorado, list) else script_mejorado
     
     # Añadir hashtags al final
@@ -259,24 +258,27 @@ def mejorar_script(script, tema):
 
 def generar_hook(tema, reemplazos):
     """Genera hooks temáticos dinámicos"""
-    hooks_disponibles = [
-        TEMATICAS.get(tema, {}).get("hooks", {}),
-        {
-            "impacto": ["Lo que nadie te dijo sobre {tema}"],
-            "curiosidad": ["¿Por qué {tema} está revolucionando todo?"]
-        }
-    ]
+    hooks_tema = TEMATICAS.get(tema, {}).get("hooks", {})
+    hooks_genericos = {
+        "impacto": ["Lo que nadie te dijo sobre {tema}"],
+        "curiosidad": ["¿Por qué {tema} está revolucionando todo?"]
+    }
     
-    # Seleccionar hook aleatorio aplicando reemplazos
-    hook = random.choice(
-        hooks_disponibles[0].get(random.choice(list(hooks_disponibles[0].keys())), []) +
-        hooks_disponibles[1].get(random.choice(list(hooks_disponibles[1].keys())), [])
-    )
+    # Seleccionar hooks disponibles
+    hooks_disponibles = []
+    if hooks_tema:
+        for estrategia in hooks_tema.values():
+            hooks_disponibles.extend(estrategia)
+    
+    hooks_disponibles.extend(hooks_genericos.values())
+    
+    # Seleccionar y formatear hook
+    hook = random.choice(hooks_disponibles) if hooks_disponibles else "Descubre esto que cambiará tu perspectiva"
     
     for k, v in reemplazos.items():
         hook = hook.replace(k, v)
     
-    return hook if hook else "Descubre esto que cambiará tu perspectiva"
+    return hook
 
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
