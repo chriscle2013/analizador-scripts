@@ -12,9 +12,9 @@ import sys
 import spacy
 from nrclex import NRCLex # Para el análisis emocional
 
-# ======================
+# =======================
 # 1. BASE DE DATOS DE TEMÁTICAS
-# ======================
+# =======================
 TEMATICAS = {
     # Deportes
     "Fórmula 1": {
