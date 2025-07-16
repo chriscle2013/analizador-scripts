@@ -61,7 +61,7 @@ TEMATICAS = {
         },
         "hashtags": ["#RobóticaMédica", "#CirugíaRobótica", "#Exoesqueletos", "#SaludDigital"]
     },
-    
+}
     "Fútbol": {
         "palabras_clave": ["gol", "partido", "jugador", "liga", "champions"],
         "hooks": {
