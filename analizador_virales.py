@@ -136,7 +136,6 @@ class HookOptimizer:
 
         try:
             X = self.vectorizer.fit_transform(hooks_virales)
-            # Asegura que n_clusters no sea mayor que el número de muestras disponibles
             n_clusters = min(3, len(hooks_virales) - 1)
             if n_clusters < 1:
                 n_clusters = 1
@@ -151,26 +150,23 @@ class HookOptimizer:
     def generar_hook_optimizado(self, texto, tema):
         """Genera hooks contextuales usando detección de entidades del script."""
         try:
-            # Obtener entidades relevantes del script
             personas = extraer_entidades(texto, "PER")
             organizaciones = extraer_entidades(texto, "ORG")
             productos = extraer_entidades(texto, "PRODUCT")
             lugares = extraer_entidades(texto, "LOC")
             fechas = extraer_entidades(texto, "DATE")
-            # Extraer nombres de animales específicos si están en el script
+            
             nombres_animales_en_script = []
-            for animal_nombre in ["perro", "gato", "hámster", "loro", "cachorros", "golden retriever", "labrador"]:
+            for animal_nombre in ["perro", "gato", "hámster", "loro", "cachorros", "golden retriever", "labrador", "ave"]:
                 if re.search(rf"\b{animal_nombre}\b", texto.lower()):
                     nombres_animales_en_script.append(animal_nombre)
             
-            # Priorizar hooks de la temática detectada
             if tema in TEMATICAS:
                 hooks_tema = TEMATICAS[tema]["hooks"]
                 estrategia = random.choice(list(hooks_tema.keys()))
                 plantilla = random.choice(hooks_tema[estrategia])
 
                 hook = plantilla
-                # Reemplazos para entidades
                 if "{piloto}" in hook and personas: hook = hook.replace("{piloto}", random.choice(personas))
                 if "{equipo}" in hook and organizaciones: hook = hook.replace("{equipo}", random.choice(organizaciones))
                 if "{circuito}" in hook and lugares: hook = hook.replace("{circuito}", random.choice(lugares))
@@ -182,26 +178,24 @@ class HookOptimizer:
                 if "{producto}" in hook and productos: hook = hook.replace("{producto}", random.choice(productos))
                 if "{persona}" in hook and personas: hook = hook.replace("{persona}", random.choice(personas))
                 
-                # *** AJUSTE CLAVE AQUÍ para {animal} y {tipo_mascota} ***
                 if "{animal}" in hook:
                     if nombres_animales_en_script:
                         hook = hook.replace("{animal}", random.choice(nombres_animales_en_script))
-                    elif personas: # Si hay nombres propios (ej. Firulais)
+                    elif personas:
                         hook = hook.replace("{animal}", random.choice(personas))
-                    else: # Fallback general
+                    else:
                         hook = hook.replace("{animal}", random.choice(["tu adorable mascota", "este peludo amigo", "este travieso animal"]))
 
                 if "{tipo_mascota}" in hook:
                     if nombres_animales_en_script:
                         hook = hook.replace("{tipo_mascota}", random.choice(nombres_animales_en_script))
-                    else: # Fallback general
+                    else:
                         hook = hook.replace("{tipo_mascota}", random.choice(["perro", "gato", "loro", "hámster"]))
 
                 if "{mal_hábito}" in hook:
                     hook = hook.replace("{mal_hábito}", random.choice(["ladrar mucho", "arañar muebles", "morder cables"]))
 
 
-                # Fallback para placeholders genéricos
                 hook = hook.replace("{robot}", "Ameca") \
                            .replace("{tecnología}", "robótica") \
                            .replace("{industria}", "la interacción humano-máquina") \
@@ -241,7 +235,6 @@ class HookOptimizer:
 
                 return hook
             
-            # Fallback si el tema no está definido
             return "Descubre cómo esto cambiará tu perspectiva para siempre."
         except Exception as e:
             st.error(f"Error en generar_hook_optimizado: {str(e)}")
@@ -251,7 +244,6 @@ class HookOptimizer:
 # FUNCIONES AUXILIARES AVANZADAS
 # ======================
 
-# Variable global para el modelo de SpaCy
 nlp = None 
 
 @st.cache_resource
@@ -288,7 +280,8 @@ def analizar_tematica(texto):
     confianza = min(100, puntaje * 20)
     return (mejor_tema, confianza)
 
-def mejorar_script(script, tema):
+# Modificamos esta función para aceptar el hook ya generado
+def mejorar_script(script, tema, pre_generated_hook=None):
     """Mejora scripts para cualquier temática con técnicas virales"""
     segmentos_temporales = re.findall(r"(\(\d+-\d+\ssegundos\).*)", script)
     tiene_estructura = bool(segmentos_temporales)
@@ -321,8 +314,8 @@ def mejorar_script(script, tema):
         "{robot}": "Ameca" if tema == "Robótica" else "este dispositivo",
         "{jugador}": random.choice(["Messi", "Cristiano", "Haaland"]) if tema == "Fútbol" else "el protagonista",
         "{tema}": tema,
-        "{animal}": random.choice(["perro", "gato", "hámster"]) if tema == "Mascotas" else "animal", # Asegurar fallback genérico aquí también
-        "{tipo_mascota}": random.choice(["perro", "gato", "loro"]) if tema == "Mascotas" else "mascota", # Asegurar fallback genérico aquí también
+        "{animal}": random.choice(["perro", "gato", "hámster"]) if tema == "Mascotas" else "animal",
+        "{tipo_mascota}": random.choice(["perro", "gato", "loro"]) if tema == "Mascotas" else "mascota",
         "{numero}": str(random.randint(10, 60)),
         "{cantidad}": str(random.randint(1, 10))
     }
@@ -362,11 +355,12 @@ def mejorar_script(script, tema):
                 
                 script_final_mejorado.append(f"✨ MEJORA: {mejora}")
                 
-    else:
-        hook_gen = generar_hook(tema, reemplazos) # Asegurarse de que el hook generado aquí se usa
+    else: # Si el script no tiene una estructura temporal explícita
+        # Usamos el hook pre-generado si existe, de lo contrario generamos uno genérico
+        gancho_a_usar = pre_generated_hook if pre_generated_hook else generar_hook(tema, reemplazos)
         llamado_accion_gen = random.choice(plantillas_genericas["llamado_accion"])
         
-        script_final_mejorado.append(f"(0-5 segundos) 🎯 GANCHO INICIAL: {hook_gen}")
+        script_final_mejorado.append(f"(0-5 segundos) 🎯 GANCHO INICIAL: {gancho_a_usar}")
         script_final_mejorado.append("\n" + script.strip() + "\n")
         script_final_mejorado.append(f"(FINAL) 📲 LLAMADA A LA ACCIÓN: {llamado_accion_gen}")
         script_final_mejorado.append(f"✨ SUGERENCIA VISUAL: Considera añadir cortes rápidos y música dinámica.")
@@ -380,7 +374,7 @@ def mejorar_script(script, tema):
     return script_final
 
 def generar_hook(tema, reemplazos):
-    """Genera hooks temáticos dinámicos"""
+    """Genera hooks temáticos dinámicos (usado como fallback o para hooks genéricos)"""
     hooks_tema = TEMATICAS.get(tema, {}).get("hooks", {})
     hooks_genericos = {
         "impacto": ["Lo que nadie te dijo sobre {tema}"],
@@ -392,8 +386,8 @@ def generar_hook(tema, reemplazos):
         for estrategia in hooks_tema.values():
             hooks_disponibles.extend(estrategia)
     
-    for hook_gen in hooks_genericos.values():
-        hooks_disponibles.extend(hook_gen)
+    for hook_gen_list in hooks_genericos.values(): # Iterar sobre las listas de hooks genéricos
+        hooks_disponibles.extend(hook_gen_list)
     
     hook = random.choice(hooks_disponibles) if hooks_disponibles else "Descubre esto que cambiará tu perspectiva"
     
@@ -442,15 +436,15 @@ def main():
                     blob = TextBlob(texto) 
                     polaridad = blob.sentiment.polarity
                     
-                    # Esta variable 'hook' es la que necesitamos asegurar que se muestre.
+                    # Generamos el hook principal aquí
                     generated_hook = hook_ai.generar_hook_optimizado(texto, tema) 
                     
-                    script_mejorado = mejorar_script(texto, tema)
+                    # Pasamos el hook principal a mejorar_script
+                    script_mejorado = mejorar_script(texto, tema, pre_generated_hook=generated_hook)
                     hashtags_output = ' '.join(TEMATICAS.get(tema, {}).get("hashtags", ["#Viral"]))
 
                     st.subheader(f"🎯 Temática: {tema} (Confianza: {confianza}%)")
                     
-                    # Usamos 'generated_hook' aquí
                     st.text_area("Hook Viral Recomendado:", value=generated_hook, height=100) 
                     
                     st.text_area("Script Optimizado:", value=script_mejorado, height=300)
