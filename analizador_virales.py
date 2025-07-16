@@ -13,6 +13,10 @@ import spacy
 from nrclex import NRCLex
 import nltk
 
+# --- ¡CAMBIO CRUCIAL AQUÍ! ---
+# st.set_page_config DEBE ser la primera llamada a un comando de Streamlit.
+st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
+
 # ======================
 # 1. BASE DE DATOS DE TEMÁTICAS
 # ======================
@@ -311,15 +315,25 @@ def get_spacy_model():
         spacy.cli.download("es_core_news_sm")
         return spacy.load("es_core_news_sm")
 
-# --- ¡CAMBIO CRUCIAL AQUÍ! ---
+@st.cache_resource
+def download_nltk_data():
+    """Descarga los recursos de NLTK necesarios."""
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except nltk.downloader.DownloadError:
+        nltk.download('punkt')
+    try:
+        nltk.data.find('taggers/averaged_perceptron_tagger')
+    except nltk.downloader.DownloadError:
+        nltk.download('averaged_perceptron_tagger')
+
 # Inicializa 'nlp' una única vez al cargar el script.
 # Esto asegura que 'nlp' siempre esté definido y sea accesible globalmente.
 nlp = get_spacy_model()
 
+
 def extraer_entidades(texto, tipo_entidad=None):
     """Extrae entidades nombradas (personas, organizaciones, lugares, productos) de un texto usando SpaCy."""
-    # Como 'nlp' ahora se inicializa globalmente, esta comprobación no es estrictamente necesaria
-    # pero puedes dejarla si quieres un doble check defensivo, aunque 'nlp' ya estará definido.
     if nlp is None: 
         st.error("Error: Modelo de SpaCy no cargado. Contacta al soporte.")
         return []
@@ -505,23 +519,14 @@ def generar_hook(tema, reemplazos):
 # ======================
 # 4. INTERFAZ STREAMLIT OPTIMIZADA
 # ======================
-
-@st.cache_resource
-def download_nltk_data():
-    """Descarga los recursos de NLTK necesarios."""
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except nltk.downloader.DownloadError:
-        nltk.download('punkt')
-    try:
-        nltk.data.find('taggers/averaged_perceptron_tagger')
-    except nltk.downloader.DownloadError:
-        nltk.download('averaged_perceptron_tagger')
     
 def main():
-    st.set_page_config(layout="wide", page_title="🔥 ViralHook Generator PRO")
-    
+    # Eliminamos download_nltk_data() y nlp = get_spacy_model() de aquí
+    # porque ya se llaman fuera de main() con @st.cache_resource.
+    # Pero las llamadas a las funciones NLTK y SpaCy deben ir *después* de st.set_page_config()
+    # y deben ser llamadas antes de usarse, lo cual se hace aquí.
     download_nltk_data()
+    # nlp ya se inicializó globalmente después de set_page_config
 
     hook_ai = HookOptimizer()
     hook_ai.entrenar([
