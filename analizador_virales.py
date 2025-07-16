@@ -23,6 +23,26 @@ TEMATICAS = {
         },
         "hashtags": ["#F1", "#Formula1"]
     },
+
+    "Robótica": {
+        "palabras_clave": ["robot", "humanoide", "Ameca", "automatización", "inteligencia artificial", "expresiones faciales", "interacciones", "actualización"],
+        "hooks": {
+            "impacto": [
+                "{robot} que está redefiniendo lo humano",
+                "La nueva versión de {robot} te sorprenderá",
+                "{robot}: ¿El avance más importante en {año}?"
+            ],
+            "futuro": [
+                "Cómo {robot} está cambiando {industria}",
+                "El futuro de la interacción humano-robot está aquí"
+            ],
+            "comparación": [
+                "{robot} vs Humanos: ¿Quién es más expresivo?",
+                "Nueva {robot}: Más humano que nunca"
+            ]
+        },
+        "hashtags": ["#Robótica", "#IA", "#FuturoTecnológico", "#Ameca", "#Humanoides"]
+    },
     
     "Fútbol": {
         "palabras_clave": ["gol", "partido", "jugador", "liga", "champions"],
