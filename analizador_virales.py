@@ -23,6 +23,15 @@ TEMATICAS = {
         },
         "hashtags": ["#F1", "#Formula1"]
     },
+    "Fútbol": {
+        "palabras_clave": ["gol", "partido", "jugador", "liga", "champions"],
+        "hooks": {
+            "táctica": ["El {sistema_juego} que hizo campeón a {equipo}"],
+            "polémica": ["El {incidente} más injusto de la historia"],
+            "dato": ["{jugador} tiene este récord de {estadística}"]
+        },
+        "hashtags": ["#Fútbol", "#Champions"]
+    },
 
     # Robótica
     "Robots Humanoides": {
@@ -61,16 +70,6 @@ TEMATICAS = {
         },
         "hashtags": ["#RobóticaMédica", "#CirugíaRobótica", "#Exoesqueletos", "#SaludDigital"]
     },
-}
-    "Fútbol": {
-        "palabras_clave": ["gol", "partido", "jugador", "liga", "champions"],
-        "hooks": {
-            "táctica": ["El {sistema_juego} que hizo campeón a {equipo}"],
-            "polémica": ["El {incidente} más injusto de la historia"],
-            "dato": ["{jugador} tiene este récord de {estadística}"]
-        },
-        "hashtags": ["#Fútbol", "#Champions"]
-    },
 
     # Mindset
     "Mindset": {
@@ -104,7 +103,7 @@ TEMATICAS = {
         },
         "hashtags": ["#Tecnología", "#Innovación"]
     }
-
+}
 # ======================
 # 2. SISTEMA DE APRENDIZAJE AUTOMÁTICO ROBUSTO
 # ======================
