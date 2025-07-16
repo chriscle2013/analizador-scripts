@@ -25,7 +25,6 @@ TEMATICAS = {
     },
 
     # Robótica
-robotica_temas = {
     "Robots Humanoides": {
         "palabras_clave": ["humanoide", "bípedo", "androide", "atlas", "asimo"],
         "hooks": {
